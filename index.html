@@ -1,475 +1,503 @@
-
-### 2. `index.html`
-Salva questo file unico come `index.html`. Contiene HTML, Tailwind CSS e JavaScript puro per gestire tutti i calcoli strutturali e le animazioni SVG.
-
-```html
 <!DOCTYPE html>
-<html lang="it" class="scroll-smooth">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NonLinear Section · Analisi M-N e Momento-Curvatura</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>NonLinearSection Tool - Advanced Section Analysis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-emerald: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --border-color: #475569;
+        }
+
         body {
-            background: radial-gradient(circle at top right, #1e293b, #020617);
-            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1e293b 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
         }
-        .terminal-window {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
         }
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 3rem;
         }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #10b981;
-            cursor: pointer;
-            margin-top: -6px;
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-emerald), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
         }
-        input[type=range]::-webkit-slider-runnable-track {
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .repo-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .repo-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-emerald);
+            border-radius: 8px;
+            color: var(--accent-emerald);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .repo-btn:hover {
+            background: var(--accent-emerald);
+            color: var(--bg-primary);
+            transform: translateY(-2px);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent-emerald);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1);
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-emerald);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .plot-container {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plot-canvas {
             width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #334155;
-            border-radius: 2px;
+            height: 250px;
+            display: block;
         }
-        .case-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+
+        .terminal {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .terminal-line.command {
+            color: var(--accent-emerald);
+        }
+
+        .terminal-line.output {
+            color: var(--text-secondary);
+        }
+
+        .terminal-line.success {
+            color: var(--accent-emerald);
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .section-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .axis-label {
+            font-size: 0.8rem;
+            fill: var(--text-secondary);
+        }
+
+        .grid-line {
+            stroke: var(--border-color);
+            stroke-width: 0.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
         }
     </style>
 </head>
-<body class="font-sans">
-
-    <!-- Hero Section -->
-    <header class="max-w-6xl mx-auto px-6 py-12">
-        <div class="flex items-center space-x-2 mb-6">
-            <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
-            <span class="text-sm text-slate-400 font-mono uppercase tracking-widest">v1.0.0 — Non-Linear Structural CLI</span>
-        </div>
-        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">NonLinear Section</h1>
-        <p class="text-xl text-slate-400 max-w-2xl mb-12">Il framework per l'analisi non lineare di sezioni in CA, Acciaio e Miste. Genera domini M-N, analizza la momento-curvatura e calcola la duttilità in millisecondi.</p>
-
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <!-- Terminal Animation -->
-            <div class="bg-black rounded-lg p-5 font-mono text-sm text-green-400 terminal-window border border-slate-700">
-                <div class="flex space-x-2 mb-3 border-b border-slate-800 pb-2">
-                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="text-slate-500 ml-2 text-xs">nls --domain --m-chi</span>
-                </div>
-                <div id="terminal-output" class="space-y-1 min-h-[200px]"></div>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 NonLinearSection Tool</h1>
+            <p class="subtitle">
+                Strumenti avanzati per l'analisi non lineare di sezioni in cemento armato.
+                Modellazione parametrica, domini di resistenza e verifica tensionale.
+            </p>
+            <div class="repo-links">
+                <a href="https://github.com/DomenicoGaudioso/SectionTool" class="repo-btn" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.481 1.236-3.377-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.896 1.235 2.066 1.235 3.377 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    SectionTool
+                </a>
+                <a href="https://github.com/DomenicoGaudioso/VSP_VerSectionPlus" class="repo-btn" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.481 1.236-3.377-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.896 1.235 2.066 1.235 3.377 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    VSP_VerSectionPlus
+                </a>
             </div>
+        </header>
 
-            <!-- Quick Stats -->
-            <div class="space-y-8">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 text-2xl font-bold">🧮</div>
-                    <div>
-                        <h3 class="font-bold text-lg">Dominio M-N</h3>
-                        <p class="text-slate-400 text-sm">Verifica pressoflessione retta e deviata.</p>
-                    </div>
+        <div class="features-grid">
+            <!-- Feature 1: Modellazione Sezione -->
+            <div class="feature-card">
+                <div class="feature-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+                    Modellazione Parametrica
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 text-2xl font-bold">📈</div>
-                    <div>
-                        <h3 class="font-bold text-lg">Momento-Curvatura</h3>
-                        <p class="text-slate-400 text-sm">Calcolo non lineare M-χ e duttilità $\mu$.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+                <p style="color: var(--text-secondary);">
+                    Definisci sezioni rettangolari, circolari o custom con armatura dettagliata.
+                    Controllo completo di geometria, materiali e disposizione ferri.
+                </p>
+                <div class="plot-container">
+                    <svg class="plot-canvas" viewBox="0 0 400 250" id="sectionPlot">
+                        <!-- Grid -->
+                        <defs>
+                            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#475569" stroke-width="0.5"/>
+                            </pattern>
+                        </defs>
+                        <rect width="400" height="250" fill="url(#grid)"/>
 
-    <!-- Case Studies -->
-    <section class="max-w-6xl mx-auto px-6 py-20 space-y-32">
-        
-        <!-- CASE 01: Material Laws -->
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <div class="text-sm text-emerald-400 font-bold uppercase tracking-widest mb-2">CASE STUDY 01 · LEGAMI COSTITUTIVI</div>
-                <h2 class="text-3xl font-bold mb-4">Modellazione Non Lineare dei Materiali</h2>
-                <p class="text-slate-400 mb-6">Definisci la resistenza caratteristica ($f_{ck}$, $f_{yk}$). Il motore genera automaticamente i diagrammi parabola-rettangolo per il calcestruzzo ed elasto-plastico per l'acciaio.</p>
-                
-                <div class="bg-slate-900/50 p-4 rounded border border-slate-700 font-mono text-sm text-slate-300 mb-6">
-                    <p class="text-slate-500">➜ nls add-concrete --grade C30 --model parabola</p>
-                    <p class="text-emerald-400">✓ fcd = 17.0 MPa, eps_cu = 0.0035</p>
-                </div>
+                        <!-- Concrete section -->
+                        <rect x="100" y="50" width="200" height="150" fill="#334155" stroke="#10b981" stroke-width="2" rx="4"/>
 
-                <div class="space-y-4">
-                    <div>
-                        <label class="flex justify-between text-sm mb-1 text-slate-400">Resistenza Calcestruzzo $f_{ck}$ <span id="fck-val" class="text-white font-mono">30 MPa</span></label>
-                        <input type="range" min="15" max="60" value="30" id="fck-slider" class="w-full">
-                    </div>
-                    <div>
-                        <label class="flex justify-between text-sm mb-1 text-slate-400">Snervamento Acciaio $f_{yk}$ <span id="fyk-val" class="text-white font-mono">450 MPa</span></label>
-                        <input type="range" min="300" max="600" value="450" id="fyk-slider" class="w-full">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="case-card rounded-xl p-6 shadow-2xl grid grid-cols-2 gap-4">
-                <!-- Concrete Plot -->
-                <div>
-                    <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-2 text-center">Calcestruzzo (σ-ε)</h3>
-                    <svg id="concrete-plot" viewBox="0 0 150 150" class="w-full h-48 bg-slate-900 rounded p-2">
-                        <line x1="10" y1="140" x2="140" y2="140" stroke="#475569" /> <!-- X axis -->
-                        <line x1="10" y1="10" x2="10" y2="140" stroke="#475569" />  <!-- Y axis -->
-                        <path id="concrete-path" d="" fill="rgba(59, 130, 246, 0.3)" stroke="#3b82f6" stroke-width="2" />
-                    </svg>
-                </div>
-                <!-- Steel Plot -->
-                <div>
-                    <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-2 text-center">Acciaio (σ-ε)</h3>
-                    <svg id="steel-plot" viewBox="0 0 150 150" class="w-full h-48 bg-slate-900 rounded p-2">
-                        <line x1="10" y1="75" x2="140" y2="75" stroke="#475569" /> <!-- X axis -->
-                        <line x1="75" y1="10" x2="75" y2="140" stroke="#475569" /> <!-- Y axis -->
-                        <path id="steel-path" d="" fill="none" stroke="#ef4444" stroke-width="2" />
+                        <!-- Rebar top -->
+                        <circle cx="130" cy="70" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="170" cy="70" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="210" cy="70" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="250" cy="70" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="290" cy="70" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+
+                        <!-- Rebar bottom -->
+                        <circle cx="130" cy="180" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="170" cy="180" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="210" cy="180" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="250" cy="180" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="290" cy="180" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+
+                        <!-- Dimension lines -->
+                        <line x1="100" y1="30" x2="300" y2="30" stroke="#94a3b8" stroke-width="1"/>
+                        <line x1="100" y1="25" x2="100" y2="35" stroke="#94a3b8" stroke-width="1"/>
+                        <line x1="300" y1="25" x2="300" y2="35" stroke="#94a3b8" stroke-width="1"/>
+                        <text x="200" y="22" text-anchor="middle" class="axis-label" fill="#94a3b8" font-size="10">b = 300mm</text>
+
+                        <line x1="320" y1="50" x2="320" y2="200" stroke="#94a3b8" stroke-width="1"/>
+                        <line x1="315" y1="50" x2="325" y2="50" stroke="#94a3b8" stroke-width="1"/>
+                        <line x1="315" y1="200" x2="325" y2="200" stroke="#94a3b8" stroke-width="1"/>
+                        <text x="340" y="125" class="axis-label" fill="#94a3b8" font-size="10" transform="rotate(90, 340, 125)">h = 400mm</text>
+
+                        <!-- Neutral axis indicator -->
+                        <line x1="80" y1="120" x2="320" y2="120" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5,5"/>
+                        <text x="330" y="125" class="axis-label" fill="#f59e0b" font-size="10">Asse Neutro</text>
                     </svg>
                 </div>
             </div>
+
+            <!-- Feature 2: Dominio M-N -->
+            <div class="feature-card">
+                <div class="feature-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17l-6-6-4 4-5-5"/></svg>
+                    Dominio di Resistenza M-N
+                </div>
+                <p style="color: var(--text-secondary);">
+                    Calcolo dell'inviluppo di rottura per combinazioni di sforzo normale e momento flettente.
+                    Verifica immediata dello stato di sollecitazione.
+                </p>
+                <div class="plot-container">
+                    <svg class="plot-canvas" viewBox="0 0 400 250" id="domainPlot">
+                        <!-- Grid -->
+                        <rect width="400" height="250" fill="url(#grid)"/>
+
+                        <!-- Axes -->
+                        <line x1="50" y1="220" x2="380" y2="220" stroke="#94a3b8" stroke-width="1.5"/>
+                        <line x1="50" y1="220" x2="50" y2="20" stroke="#94a3b8" stroke-width="1.5"/>
+
+                        <!-- Domain curve -->
+                        <path d="M 50 220 L 80 200 Q 150 40 200 30 Q 280 50 350 150 L 360 220 Z"
+                              fill="rgba(16, 185, 129, 0.2)"
+                              stroke="#10b981"
+                              stroke-width="2"/>
+
+                        <!-- Working point (inside) -->
+                        <circle cx="180" cy="120" r="6" fill="#3b82f6" stroke="#1e293b" stroke-width="2"/>
+                        <text x="190" y="115" class="axis-label" fill="#3b82f6" font-size="10">Punto di lavoro ✓</text>
+
+                        <!-- Labels -->
+                        <text x="370" y="235" class="axis-label" fill="#94a3b8" font-size="10">N</text>
+                        <text x="30" y="25" class="axis-label" fill="#94a3b8" font-size="10">M</text>
+
+                        <!-- Legend -->
+                        <rect x="250" y="30" width="120" height="60" fill="#1e293b" stroke="#475569" rx="4"/>
+                        <line x1="260" y1="50" x2="280" y2="50" stroke="#10b981" stroke-width="2"/>
+                        <text x="290" y="55" class="axis-label" fill="#94a3b8" font-size="9">Dominio M-N</text>
+                        <circle cx="270" cy="70" r="4" fill="#3b82f6"/>
+                        <text x="290" y="75" class="axis-label" fill="#94a3b8" font-size="9">Verifica OK</text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Feature 3: Campo Tensionale -->
+            <div class="feature-card">
+                <div class="feature-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="8"/></svg>
+                    Analisi Tensionale Completa
+                </div>
+                <p style="color: var(--text-secondary);">
+                    Diagrammi di deformazione e tensione nel calcestruzzo e nell'acciaio.
+                    Posizione dell'asse neutro e coefficienti di sicurezza.
+                </p>
+                <div class="plot-container">
+                    <svg class="plot-canvas" viewBox="0 0 400 250" id="stressPlot">
+                        <!-- Grid -->
+                        <rect width="400" height="250" fill="url(#grid)"/>
+
+                        <!-- Section outline -->
+                        <rect x="80" y="40" width="120" height="170" fill="#334155" stroke="#10b981" stroke-width="2" rx="2"/>
+
+                        <!-- Strain diagram (left) -->
+                        <line x1="50" y1="40" x2="50" y2="210" stroke="#94a3b8" stroke-width="1"/>
+                        <path d="M 50 40 L 80 120 L 50 210" fill="rgba(59, 130, 246, 0.3)" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="30" y="125" class="axis-label" fill="#3b82f6" font-size="9" transform="rotate(-90, 30, 125)">ε</text>
+
+                        <!-- Stress diagram concrete (right) -->
+                        <line x1="230" y1="40" x2="230" y2="210" stroke="#94a3b8" stroke-width="1"/>
+                        <path d="M 230 120 Q 260 120 260 170 L 230 210" fill="rgba(245, 158, 11, 0.3)" stroke="#f59e0b" stroke-width="2"/>
+                        <text x="270" y="125" class="axis-label" fill="#f59e0b" font-size="9" transform="rotate(90, 270, 125)">σ_c</text>
+
+                        <!-- Neutral axis -->
+                        <line x1="60" y1="120" x2="220" y2="120" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4"/>
+                        <text x="230" y="125" class="axis-label" fill="#ef4444" font-size="9">y_n</text>
+
+                        <!-- Rebar -->
+                        <circle cx="140" cy="60" r="5" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="140" cy="190" r="5" fill="#3b82f6" stroke="#1e293b" stroke-width="1"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Feature 4: Curva Momento-Curvatura -->
+            <div class="feature-card">
+                <div class="feature-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/><circle cx="12" cy="12" r="2"/></svg>
+                    Curva Momento-Curvatura
+                </div>
+                <p style="color: var(--text-secondary);">
+                    Analisi pushover della sezione fino al collasso. Identificazione dei punti di snervamento
+                    e capacità duttile della sezione.
+                </p>
+                <div class="plot-container">
+                    <svg class="plot-canvas" viewBox="0 0 400 250" id="momentCurvaturePlot">
+                        <!-- Grid -->
+                        <rect width="400" height="250" fill="url(#grid)"/>
+
+                        <!-- Axes -->
+                        <line x1="50" y1="220" x2="380" y2="220" stroke="#94a3b8" stroke-width="1.5"/>
+                        <line x1="50" y1="220" x2="50" y2="20" stroke="#94a3b8" stroke-width="1.5"/>
+
+                        <!-- M-φ curve -->
+                        <path d="M 50 220 Q 100 200 150 150 Q 200 100 250 80 L 300 75 L 350 70"
+                              fill="none"
+                              stroke="#8b5cf6"
+                              stroke-width="3"
+                              stroke-linecap="round"/>
+
+                        <!-- Yield point -->
+                        <circle cx="150" cy="150" r="6" fill="#10b981" stroke="#1e293b" stroke-width="2"/>
+                        <text x="160" y="145" class="axis-label" fill="#10b981" font-size="9">Snervamento</text>
+
+                        <!-- Ultimate point -->
+                        <circle cx="300" cy="75" r="6" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+                        <text x="310" y="70" class="axis-label" fill="#ef4444" font-size="9">Collasso</text>
+
+                        <!-- Labels -->
+                        <text x="370" y="235" class="axis-label" fill="#94a3b8" font-size="10">φ [1/m]</text>
+                        <text x="30" y="25" class="axis-label" fill="#94a3b8" font-size="10">M [kNm]</text>
+
+                        <!-- Ductility region -->
+                        <rect x="150" y="75" width="150" height="75" fill="rgba(139, 92, 246, 0.1)" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="4,4"/>
+                        <text x="225" y="115" text-anchor="middle" class="axis-label" fill="#8b5cf6" font-size="9">Regime Duttille</text>
+                    </svg>
+                </div>
+            </div>
         </div>
 
-        <!-- CASE 02: M-N Domain -->
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div class="order-2 md:order-1 case-card rounded-xl p-6 shadow-2xl">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-xs text-slate-400 uppercase tracking-widest">Dominio di Interazione</span>
-                    <span id="status-badge" class="text-xs bg-emerald-900/50 text-emerald-400 px-2 py-1 rounded">✓ VERIFICATA</span>
-                </div>
-                <svg id="mn-plot" viewBox="-250 0 2250 600" class="w-full h-64 bg-slate-900 rounded">
-                    <line x1="-250" y1="550" x2="2100" y2="550" stroke="#475569" /> <!-- N axis -->
-                    <line x1="0" y1="600" x2="0" y2="0" stroke="#475569" />       <!-- M axis -->
-                    <text x="2050" y="540" fill="#94a3b8" class="text-[12px]">N [kN]</text>
-                    <text x="10" y="20" fill="#94a3b8" class="text-[12px]">M [kNm]</text>
-                    <polygon id="domain-poly" points="" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2" />
-                    <circle id="ed-point" cx="0" cy="0" r="8" fill="#ef4444" />
-                </svg>
-                <div class="mt-6 grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="flex justify-between text-sm mb-1 text-slate-400">Sforzo Assiale $N_{Ed}$ <span id="n-val" class="text-white font-mono">1000 kN</span></label>
-                        <input type="range" min="-200" max="1900" value="1000" id="n-slider" class="w-full">
-                    </div>
-                    <div>
-                        <label class="flex justify-between text-sm mb-1 text-slate-400">Momento $M_{Ed}$ <span id="m-val" class="text-white font-mono">300 kNm</span></label>
-                        <input type="range" min="0" max="550" value="300" id="m-slider" class="w-full">
-                    </div>
-                </div>
+        <!-- Terminal Demo -->
+        <div class="feature-card" style="margin-bottom: 2rem;">
+            <div class="feature-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                Workflow da Terminale
             </div>
-            <div class="order-1 md:order-2">
-                <div class="text-sm text-emerald-400 font-bold uppercase tracking-widest mb-2">CASE STUDY 02 · DOMINIO M-N</div>
-                <h2 class="text-3xl font-bold mb-4">Verifica Presso-Flessione</h2>
-                <p class="text-slate-400 mb-6">Traccia il dominio di rottura e verifica istantaneamente se le sollecitazioni di progetto ($N_{Ed}, M_{Ed}$) rientrano nell'inviluppo di sicurezza.</p>
+            <div class="terminal">
+                <div class="terminal-line command" style="animation-delay: 0.2s;">$ sectiontool create --type rectangular --b 300 --h 400</div>
+                <div class="terminal-line output" style="animation-delay: 0.5s;">✓ Sezione creata: 300x400 mm</div>
+                <div class="terminal-line command" style="animation-delay: 1s;">$ sectiontool add-rebar --diameter 16 --count 5 --cover 30</div>
+                <div class="terminal-line output" style="animation-delay: 1.3s;">✓ Armatura aggiunta: 5Φ16 (copriferro 30mm)</div>
+                <div class="terminal-line command" style="animation-delay: 2s;">$ versection verify --n 500 --m 150</div>
+                <div class="terminal-line success" style="animation-delay: 2.8s;">✓ VERIFICA SODDISFATTA - Coeff. sicurezza: 1.45</div>
+                <div class="terminal-line output" style="animation-delay: 3.2s;">  Deformazione calcestruzzo: 0.0018</div>
+                <div class="terminal-line output" style="animation-delay: 3.4s;">  Deformazione acciaio: 0.0021 (snervato)</div>
             </div>
         </div>
 
-        <!-- CASE 03: Moment-Curvature -->
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <div class="text-sm text-emerald-400 font-bold uppercase tracking-widest mb-2">CASE STUDY 03 · ANALISI M-χ</div>
-                <h2 class="text-3xl font-bold mb-4">Momento-Curvatura e Duttilità</h2>
-                <p class="text-slate-400 mb-6">Analisi non lineare incrementale: aumenta la curvatura $\chi$ per osservare il passaggio in campo plastico del calcestruzzo e dell'acciaio, e il relativo collasso.</p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="flex justify-between text-sm mb-1 text-slate-400">Curvatura $\chi$ <span id="chi-val" class="text-white font-mono">0.005</span></label>
-                        <input type="range" min="1" max="30" value="5" step="1" id="chi-slider" class="w-full">
-                    </div>
-                </div>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">10+</span>
+                <span class="stat-label">Tipologie di sezione</span>
             </div>
-            
-            <div class="case-card rounded-xl p-6 shadow-2xl">
-                <div class="grid grid-cols-2 gap-4">
-                    <!-- Section & Strain -->
-                    <div>
-                        <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-2 text-center">Deformazione e Tensione</h3>
-                        <svg viewBox="0 0 150 200" class="w-full h-48 bg-slate-900 rounded">
-                            <rect x="50" y="20" width="60" height="120" fill="none" stroke="#475569" />
-                            <circle cx="60" cy="130" r="4" fill="#ef4444" />
-                            <circle cx="100" cy="130" r="4" fill="#ef4444" />
-                            <line id="strain-line" x1="120" y1="20" x2="40" y2="140" stroke="#fbbf24" stroke-width="2" />
-                            <path id="stress-block" d="" fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" />
-                        </svg>
-                    </div>
-                    <!-- M-Chi Plot -->
-                    <div>
-                        <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-2 text-center">Curva M-χ</h3>
-                        <svg id="m-chi-plot" viewBox="0 0 150 150" class="w-full h-48 bg-slate-900 rounded p-2">
-                            <line x1="10" y1="140" x2="140" y2="140" stroke="#475569" /> 
-                            <line x1="10" y1="140" x2="10" y2="10" stroke="#475569" /> 
-                            <path id="m-chi-path" d="" fill="none" stroke="#10b981" stroke-width="2" />
-                            <circle id="m-chi-point" cx="0" cy="0" r="4" fill="#fff" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mt-6 font-mono text-sm border-t border-slate-700 pt-4">
-                    <div>
-                        <p class="text-slate-500 text-xs">Momento Resist.</p>
-                        <p id="mr-val" class="text-emerald-400 text-xl font-bold">125.0 kNm</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">Duttilità $\mu$</p>
-                        <p id="mu-val" class="text-emerald-400 text-xl font-bold">2.1</p>
-                    </div>
-                </div>
+            <div class="stat-card">
+                <span class="stat-number">EC2</span>
+                <span class="stat-label">Normativa di riferimento</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">∞</span>
+                <span class="stat-label">Configurazioni possibili</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">Open</span>
+                <span class="stat-label">Source & Free</span>
             </div>
         </div>
-    </section>
 
-    <!-- Features -->
-    <section class="max-w-6xl mx-auto px-6 py-20">
-        <h2 class="text-3xl font-bold text-center mb-12">Perché NonLinear Section?</h2>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-                <div class="text-2xl mb-3">⚙️</div>
-                <h3 class="text-xl font-bold mb-2">Modellazione Avanzata</h3>
-                <p class="text-slate-400 text-sm">Legami costitutivi non lineari (Mander, Parabola-Rettangolo, Sargin) integrati nativamente.</p>
-            </div>
-            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-                <div class="text-2xl mb-3">📊</div>
-                <h3 class="text-xl font-bold mb-2">Dominio M-N 3D</h3>
-                <p class="text-slate-400 text-sm">Generazione istantanea di domini per pressoflessione deviata e calcolo dell'armatura asimmetrica.</p>
-            </div>
-            <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-                <div class="text-2xl mb-3">⚡</div>
-                <h3 class="text-xl font-bold mb-2">CLI & Scripting</h3>
-                <p class="text-slate-400 text-sm">Automazione dei calcoli di vulnerabilità sismica su intere strutture con script batch.</p>
-            </div>
-        </div>
-    </section>
+        <footer>
+            <p>Sviluppato con ❤️ per l'ingegneria strutturale italiana</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com/DomenicoGaudioso" style="color: var(--accent-emerald); text-decoration: none;">@DomenicoGaudioso</a>
+            </p>
+        </footer>
+    </div>
 
-    <!-- Scripts -->
     <script>
-        // TERMINAL ANIMATION
-        const terminal = document.getElementById('terminal-output');
-        const lines = [
-            { text: '$ nls init --project "capannone-industriale"', type: 'cmd' },
-            { text: '✓ progetto inizializzato', type: 'success' },
-            { text: '$ nls add-concrete --grade C30/37 --model mander', type: 'cmd' },
-            { text: '✓ calcestruzzo C30/37 confinato aggiunto', type: 'success' },
-            { text: '$ nls add-rebar --type B450C --cover 40mm', type: 'cmd' },
-            { text: '✓ armature B450C definite', type: 'success' },
-            { text: '$ nls run analysis --type m-curvature', type: 'cmd' },
-            { text: '⠋ calcolo non lineare...', type: 'info', wait: 800 },
-            { text: '✓ curva M-χ generata. Duttilità: μ = 4.2', type: 'success' },
-            { text: '$ nls verify --domain M-N', type: 'cmd' },
-            { text: '✗ WARNING: punto esterno al dominio', type: 'error' }
-        ];
-
-        async function typeTerminal() {
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                const div = document.createElement('div');
-                
-                if (line.type === 'cmd') div.className = 'text-white font-bold';
-                else if (line.type === 'success') div.className = 'text-emerald-400';
-                else if (line.type === 'error') div.className = 'text-red-400';
-                else div.className = 'text-slate-400';
-
-                terminal.appendChild(div);
-                
-                let currentText = "";
-                for (let j = 0; j < line.text.length; j++) {
-                    currentText += line.text[j];
-                    div.textContent = currentText;
-                    await new Promise(r => setTimeout(r, 20 + Math.random() * 30));
-                }
-                
-                if (line.wait) await new Promise(r => setTimeout(r, line.wait));
-                else await new Promise(r => setTimeout(r, 200));
-            }
-        }
-        typeTerminal();
-
-        // CASE 1: MATERIAL LAWS
-        const fckSlider = document.getElementById('fck-slider');
-        const fykSlider = document.getElementById('fyk-slider');
-        const fckVal = document.getElementById('fck-val');
-        const fykVal = document.getElementById('fyk-val');
-        const concretePath = document.getElementById('concrete-path');
-        const steelPath = document.getElementById('steel-path');
-
-        function updateCase1() {
-            const fck = parseFloat(fckSlider.value);
-            const fyk = parseFloat(fykSlider.value);
-            fckVal.textContent = fck + " MPa";
-            fykVal.textContent = fyk + " MPa";
-
-            // Concrete Parabola-Rectangle
-            let cPath = "M 10 140 ";
-            const fcd = (fck / 1.5) * 0.85; // simplified fcd
-            const maxY = 140 - (fcd / 40) * 130; // normalized height
-            const eps_c2 = 0.002; 
-            const eps_cu = 0.0035;
-            const ratio = eps_c2 / eps_cu;
-            const x_par = 10 + ratio * 100;
-            
-            for(let i = 0; i <= 10; i++) {
-                let eps = (i/10) * eps_c2;
-                let sigma = fcd * (1 - Math.pow(1 - (eps / eps_c2), 2));
-                let y = 140 - (sigma / 40) * 130;
-                let x = 10 + (eps / eps_cu) * 100;
-                cPath += `L ${x} ${y} `;
-            }
-            // Rectangle part
-            cPath += `L ${10 + 100} ${maxY} `;
-            cPath += `L ${10 + 100} 140 Z`;
-            concretePath.setAttribute('d', cPath);
-
-            // Steel Elasto-Plastic
-            const Es = 200000;
-            const eps_y = fyk / Es;
-            const eps_u = 0.09; // ultimate
-            const y_yield = 75 - (fyk / 600) * 60;
-            const x_yield = 75 + (eps_y / eps_u) * 60;
-            const x_max = 135;
-            
-            steelPath.setAttribute('d', `M 75 75 L ${x_yield} ${y_yield} L ${x_max} ${y_yield}`);
-        }
-        fckSlider.addEventListener('input', updateCase1);
-        fykSlider.addEventListener('input', updateCase1);
-        updateCase1();
-
-        // CASE 2: M-N DOMAIN
-        const nSlider = document.getElementById('n-slider');
-        const mSlider = document.getElementById('m-slider');
-        const nVal = document.getElementById('n-val');
-        const mVal = document.getElementById('m-val');
-        const domainPoly = document.getElementById('domain-poly');
-        const edPoint = document.getElementById('ed-point');
-        const statusBadge = document.getElementById('status-badge');
-
-        // Pre-calculated domain points (approximate)
-        const domain = [
-            [2000, 0], [1866, 86], [1733, 171], [1600, 250], [1466, 321], 
-            [1333, 383], [1200, 433], [1066, 469], [933, 492], [800, 500],
-            [711, 477], [622, 455], [533, 433], [444, 411], [355, 388],
-            [266, 366], [177, 344], [88, 322], [0, 300], [-50, 225],
-            [-100, 150], [-150, 75], [-200, 0]
-        ];
-
-        function drawDomain() {
-            let pointsStr = "";
-            domain.forEach(p => {
-                // SVG Y is inverted (0 is top). M=0 is at y=550.
-                const x = p[0]; 
-                const y = 550 - (p[1] / 500) * 500;
-                pointsStr += `${x},${y} `;
+        // Simple animation for terminal lines
+        document.addEventListener('DOMContentLoaded', function() {
+            const terminalLines = document.querySelectorAll('.terminal-line');
+            terminalLines.forEach((line, index) => {
+                setTimeout(() => {
+                    line.style.opacity = '1';
+                }, index * 300);
             });
-            domainPoly.setAttribute('points', pointsStr);
-        }
-        drawDomain();
-
-        function updateCase2() {
-            const n = parseFloat(nSlider.value);
-            const m = parseFloat(mSlider.value);
-            nVal.textContent = n + " kN";
-            mVal.textContent = m + " kNm";
-
-            const x = n;
-            const y = 550 - (m / 500) * 500;
-            edPoint.setAttribute('cx', x);
-            edPoint.setAttribute('cy', y);
-
-            // Point in Polygon logic (Ray Casting)
-            let inside = false;
-            for (let i = 0, j = domain.length - 1; i < domain.length; j = i++) {
-                let xi = domain[i][0], yi = 550 - (domain[i][1] / 500) * 500;
-                let xj = domain[j][0], yj = 550 - (domain[j][1] / 500) * 500;
-                let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-                if (intersect) inside = !inside;
-            }
-
-            if (inside) {
-                statusBadge.textContent = "✓ VERIFICATA";
-                statusBadge.className = "text-xs bg-emerald-900/50 text-emerald-400 px-2 py-1 rounded";
-                edPoint.setAttribute('fill', '#10b981');
-            } else {
-                statusBadge.textContent = "✗ FALLITA";
-                statusBadge.className = "text-xs bg-red-900/50 text-red-400 px-2 py-1 rounded animate-pulse";
-                edPoint.setAttribute('fill', '#ef4444');
-            }
-        }
-        nSlider.addEventListener('input', updateCase2);
-        mSlider.addEventListener('input', updateCase2);
-        updateCase2();
-
-        // CASE 3: M-CHI ANALYSIS
-        const chiSlider = document.getElementById('chi-slider');
-        const chiVal = document.getElementById('chi-val');
-        const strainLine = document.getElementById('strain-line');
-        const stressBlock = document.getElementById('stress-block');
-        const mChiPath = document.getElementById('m-chi-path');
-        const mChiPoint = document.getElementById('m-chi-point');
-        const mrVal = document.getElementById('mr-val');
-        const muVal = document.getElementById('mu-val');
-
-        let history = [];
-
-        function updateCase3() {
-            const chi = parseFloat(chiSlider.value) * 0.001; // e.g., 0.001 to 0.030
-            chiVal.textContent = chi.toFixed(3);
-
-            // Section Height h=120. Cover = 10. 
-            // We assume neutral axis moves or we just pivot the strain line.
-            // For simplicity, let's assume NA is at mid-height initially, but strain increases.
-            const eps_top = chi * 60; // compressive
-            const eps_bot = chi * 60; // tensile
-            
-            // Strain line pivots
-            const x_top = 80 + (eps_top / 0.01) * 40; 
-            const x_bot = 80 - (eps_bot / 0.01) * 40;
-            strainLine.setAttribute('x1', x_top);
-            strainLine.setAttribute('x2', x_bot);
-
-            // Stress block (simplified parabola)
-            const fcd = 17;
-            const sigma_max = Math.min(eps_top * 30000, fcd); // simple linear capped at fcd
-            const stress_w = (sigma_max / 30) * 40;
-            stressBlock.setAttribute('d', `M 50 20 L ${50 - stress_w} 20 L ${50 - stress_w} 80 L 50 80 Z`);
-
-            // Moment calculation (fake but monotonic)
-            const M = sigma_max * 60 * 0.8; // Area * lever arm
-            const chi_norm = (chi / 0.030) * 130; // normalized to 130px width
-            const m_norm = 140 - (M / 500) * 130; // normalized to 130px height
-
-            history.push([chi_norm, m_norm]);
-            if(history.length > 50) history.shift();
-
-            let pathStr = `M 10 140 `;
-            history.forEach(p => {
-                pathStr += `L ${10 + p[0]} ${p[1]} `;
-            });
-            mChiPath.setAttribute('d', pathStr);
-            mChiPoint.setAttribute('cx', 10 + chi_norm);
-            mChiPoint.setAttribute('cy', m_norm);
-
-            mrVal.textContent = M.toFixed(1) + " kNm";
-            muVal.textContent = (chi / 0.005).toFixed(1); // Yield at 0.005
-        }
-        chiSlider.addEventListener('input', updateCase3);
-        updateCase3();
-
+        });
     </script>
 </body>
 </html>
