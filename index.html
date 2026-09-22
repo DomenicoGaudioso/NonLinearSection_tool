@@ -1,450 +1,1506 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NonLinearSection Tool | Domenico Gaudioso</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #050505;
-            --card-bg: #0a0a0a;
-            --text-main: #ffffff;
-            --text-muted: #888888;
-            --accent: #00d4aa; /* Il verde acqua tipico dello stile feagent */
-            --accent-dim: rgba(0, 212, 170, 0.1);
-            --border: #222222;
-            --font-main: 'Inter', sans-serif;
-            --font-code: 'JetBrains Mono', monospace;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NonLinearSection — Analisi non lineare di sezioni</title>
+<meta name="description" content="Analisi non lineare di sezioni in c.a., c.a.p., acciaio e miste: legami costitutivi, curva momento-curvatura, domini di interazione N-M e N-Mx-My. Validato su INCA2.">
+<style>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --surface-2: #eef0f3;
+    --text: #0a0a0f;
+    --text-secondary: #5c5c6a;
+    --text-muted: #9a9aaa;
+    --accent: #00d4aa;
+    --accent-soft: rgba(0, 212, 170, 0.1);
+    --accent-glow: rgba(0, 212, 170, 0.3);
+    --border: rgba(0, 0, 0, 0.08);
+    --border-accent: rgba(0, 212, 170, 0.4);
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: var(--font-main);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
+    --term-bg: #0a0a10;
+    --term-surface: #12121a;
+    --term-border: rgba(255, 255, 255, 0.08);
+    --term-text: #f0f0f5;
+    --term-text-sec: #8a8a9a;
 
-        a { text-decoration: none; color: inherit; transition: 0.3s; }
-        ul { list-style: none; }
+    --radius: 14px;
+    --radius-sm: 10px;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  }
 
-        /* Layout */
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
 
-        /* Header / Nav */
-        header {
-            padding: 2rem 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
+  /* HERO */
+  .hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
+  #meshCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .hero-content { position: relative; z-index: 2; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; background: var(--surface);
+    border: 1px solid var(--border-accent); border-radius: 100px;
+    font-size: 13px; color: var(--text-secondary); font-family: var(--font-mono);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .badge-dot {
+    width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent), 0 0 4px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .hero h1 {
+    font-size: clamp(56px, 11vw, 128px);
+    font-weight: 800; letter-spacing: -0.04em; margin: 24px 0 16px;
+    background: linear-gradient(180deg, #0a0a0f 0%, #6e6e7a 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; line-height: 1;
+  }
+  .hero .subtitle { font-size: clamp(16px, 2vw, 20px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 56px; }
 
-        .logo {
-            font-weight: 700;
-            font-size: 1.2rem;
-            letter-spacing: -0.5px;
-        }
+  /* TERMINALE HERO */
+  .terminal-wrap { perspective: 1200px; margin: 0 auto; max-width: 880px; position: relative; }
+  .terminal-glow {
+    position: absolute; inset: -50px;
+    background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 65%);
+    filter: blur(50px); opacity: 0.5;
+    animation: glow-pulse 4s ease-in-out infinite;
+    pointer-events: none; z-index: 0;
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.95); }
+    50% { opacity: 0.6; transform: scale(1.08); }
+  }
+  .terminal {
+    position: relative; background: var(--term-bg);
+    border: 1px solid var(--border-accent); border-radius: 14px; overflow: hidden;
+    transform-style: preserve-3d; transition: transform 0.15s ease-out;
+    box-shadow: 0 0 0 1px rgba(0, 212, 170, 0.1), 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 80px rgba(0, 212, 170, 0.1);
+    z-index: 1;
+  }
+  .terminal-header {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: var(--term-surface); border-bottom: 1px solid var(--term-border);
+    position: relative; z-index: 3;
+  }
+  .terminal-dots { display: flex; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; opacity: 0.9; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+  .terminal-title {
+    flex: 1; text-align: center; font-family: var(--font-mono);
+    font-size: 12px; color: var(--term-text-sec); letter-spacing: 0.02em;
+  }
+  .terminal-body { position: relative; padding: 22px 24px; height: 440px; overflow: hidden; background: var(--term-bg); }
+  .perspective-grid {
+    position: absolute; inset: -50%;
+    background-image:
+      linear-gradient(rgba(0, 212, 170, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 170, 0.12) 1px, transparent 1px);
+    background-size: 44px 44px;
+    transform: perspective(400px) rotateX(60deg) translateY(0);
+    animation: grid-scroll 6s linear infinite;
+    pointer-events: none; z-index: 1;
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  }
+  @keyframes grid-scroll {
+    from { transform: perspective(400px) rotateX(60deg) translateY(0); }
+    to { transform: perspective(400px) rotateX(60deg) translateY(44px); }
+  }
+  .scanlines {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0, 0, 0, 0.18) 2px, rgba(0, 0, 0, 0.18) 3px);
+    pointer-events: none; z-index: 4; opacity: 0.5;
+  }
+  .terminal-content {
+    position: relative; z-index: 5; font-family: var(--font-mono);
+    font-size: 12.5px; line-height: 1.65; text-align: left;
+    height: 100%; overflow-y: auto; overflow-x: hidden;
+    scrollbar-width: none; color: var(--term-text);
+  }
+  .terminal-content::-webkit-scrollbar { display: none; }
+  .term-line { white-space: pre-wrap; word-break: break-word; padding: 1px 0; }
+  .term-prompt { color: var(--accent); }
+  .term-input { color: var(--term-text); }
+  .term-output { color: var(--term-text-sec); }
+  .term-output-accent { color: var(--accent); }
+  .cursor {
+    display: inline-block; width: 8px; height: 14px; background: var(--accent);
+    vertical-align: text-bottom; margin-left: 2px;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  .terminal-badges { display: flex; justify-content: center; gap: 12px; margin-top: 36px; flex-wrap: wrap; }
+  .term-badge {
+    padding: 6px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 100px; font-size: 12px; color: var(--text-secondary);
+    font-family: var(--font-mono); box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  }
 
-        .logo span { color: var(--accent); }
+  /* barra di navigazione documentazione */
+  .docbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--term-surface);border-bottom:1px solid var(--term-border);
+    padding:10px 22px;font-family:var(--font-mono);font-size:12px;color:var(--term-text-sec);position:relative;z-index:2}
+  .docbar a{color:var(--accent);text-decoration:none}
+  .docbar a:hover{text-decoration:underline}
 
-        .nav-links a {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-left: 2rem;
-        }
+  /* SECTIONS */
+  .section { padding: 100px 0; position: relative; z-index: 2; background: var(--bg); }
+  .section-header { text-align: center; margin-bottom: 56px; }
+  .section-title { font-size: clamp(32px, 5vw, 48px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 16px; color: var(--text); }
+  .section-subtitle { font-size: 18px; color: var(--text-secondary); max-width: 580px; margin: 0 auto; }
 
-        .nav-links a:hover { color: var(--accent); }
+  /* DEMO */
+  .scroll-demo-section {
+    padding: 110px 0 0; background: var(--bg);
+    position: relative; z-index: 2; border-top: 1px solid var(--border);
+  }
+  .scroll-demo-section.alt-bg .demo-head-zone { background: var(--surface); }
+  .demo-head { display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; align-items: end; padding-bottom: 56px; }
+  .demo-text .reveal-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+  .demo-text.in-view .reveal-up { opacity: 1; transform: translateY(0); }
+  .demo-text.in-view .reveal-up.d1 { transition-delay: 0.1s; }
+  .demo-text.in-view .reveal-up.d2 { transition-delay: 0.2s; }
+  .demo-text.in-view .reveal-up.d3 { transition-delay: 0.3s; }
+  .demo-label { font-family: var(--font-mono); color: var(--accent); font-size: 14px; margin-bottom: 12px; display: block; letter-spacing: 0.18em; }
+  .demo-title { font-size: clamp(30px, 4.4vw, 46px); font-weight: 700; margin-bottom: 16px; line-height: 1.08; letter-spacing: -0.02em; }
+  .demo-desc { font-size: 17px; color: var(--text-secondary); margin-bottom: 0; }
 
-        /* Hero Section */
-        .hero {
-            padding: 8rem 0 6rem;
-            position: relative;
-        }
+  .demo-terminal {
+    background: var(--term-bg); border: 1px solid var(--term-border);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12); font-family: var(--font-mono);
+  }
+  .demo-terminal-header {
+    background: var(--term-surface); padding: 8px 12px;
+    border-bottom: 1px solid var(--term-border);
+    font-size: 11px; color: var(--term-text-sec);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .demo-terminal-header .dots { display: flex; gap: 5px; }
+  .demo-terminal-header .dots span { width: 8px; height: 8px; border-radius: 50%; }
+  .demo-terminal-body { padding: 16px; font-size: 13px; color: var(--term-text); min-height: 132px; }
+  .dt-prompt { color: var(--accent); }
+  .dt-cmd { color: #fff; }
+  .dt-out { color: var(--term-text-sec); margin: 4px 0 0 14px; white-space: pre-wrap; transition: opacity .4s ease; }
+  .dt-out.good { color: var(--accent); }
+  .dt-cursor {
+    display: inline-block; width: 7px; height: 13px; background: var(--accent);
+    vertical-align: text-bottom; animation: blink 1s steps(1) infinite;
+  }
 
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(to right, #fff, #888);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+  /* STAGE */
+  .demo-stage-wrap {
+    position: relative; width: 100%;
+    height: min(74vh, 680px); min-height: 420px;
+    background: #0d1117; overflow: hidden;
+  }
+  .demo-stage-wrap canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+    transition: opacity 0.25s linear;
+  }
+  .demo-stage-wrap canvas.gl-layer { opacity: 0; }
+  .stage-vignette {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,0.52) 100%);
+  }
+  .demo-stage-wrap .scanlines { opacity: 0.22; z-index: 3; }
+  .hud {
+    position: absolute; z-index: 5;
+    font-family: var(--font-mono); font-size: 11.5px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(235,240,245,0.88);
+    background: rgba(8,10,16,0.55);
+    border: 1px solid rgba(0, 212, 170, 0.28);
+    backdrop-filter: blur(6px);
+    padding: 7px 12px; border-radius: 8px;
+    display: flex; align-items: center; gap: 9px;
+    max-width: calc(100vw - 48px);
+  }
+  .hud b { color: var(--accent); font-weight: 500; }
+  .hud-tl { top: 22px; left: 26px; }
+  .hud-tr { top: 22px; right: 26px; }
+  .hud-tc { top: 22px; left: 50%; transform: translateX(-50%); border-color: rgba(251,191,36,.4); color: #fbbf24; }
+  .hud-bl { bottom: 22px; left: 26px; }
+  .hud-br { bottom: 22px; right: 26px; color: rgba(235,240,245,0.6); }
+  .rec {
+    width: 9px; height: 9px; border-radius: 50%; background: #ef4444;
+    box-shadow: 0 0 10px #ef4444; animation: pulse 1.3s ease-in-out infinite; flex-shrink: 0;
+  }
+  .corner { position: absolute; width: 24px; height: 24px; border: 2px solid rgba(0, 212, 170, 0.55); z-index: 5; pointer-events: none; }
+  .c-tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+  .c-tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+  .c-bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+  .c-br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
 
-        .hero p {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin-bottom: 3rem;
-        }
+  /* FEATURES — QUADRATI */
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 0 12px var(--accent);
+  }
+  .feature-card:hover { transform: translateY(-4px); border-color: var(--border-accent); background: #fff; }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon {
+    width: 62px; height: 62px; border-radius: 16px;
+    background: var(--accent-soft); border: 1px solid var(--border-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin-bottom: 18px;
+    transition: transform 0.3s ease;
+  }
+  .feature-card:hover .feature-icon { transform: rotate(-6deg) scale(1.08); }
+  .feature-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .feature-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+  @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) {
+    .features-grid { grid-template-columns: 1fr; }
+    .feature-card { aspect-ratio: auto; }
+  }
 
-        .btn-group { display: flex; gap: 1rem; }
+  /* INSTALL */
+  .code-block {
+    position: relative; background: var(--term-bg); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; max-width: 820px; margin: 0 auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+  }
+  .code-header {
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 10px 14px; background: var(--term-surface);
+    border-bottom: 1px solid var(--term-border); gap: 10px;
+  }
+  .copy-btn {
+    background: transparent; border: 1px solid var(--term-border);
+    color: var(--term-text-sec); padding: 5px 12px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-family: var(--font-mono);
+    transition: all 0.2s ease;
+  }
+  .copy-btn:hover { border-color: var(--border-accent); color: var(--accent); }
+  .code-label { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); padding: 5px 0; }
+  .code-content {
+    padding: 20px 22px; font-family: var(--font-mono); font-size: 13px;
+    line-height: 1.85; overflow-x: auto; color: var(--term-text);
+  }
+  .code-comment { color: #6e6e7a; }
+  .code-command { color: var(--accent); }
+  .install-note { text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-secondary); }
+  .install-note a { color: var(--accent); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border-radius: 4px;
-            font-family: var(--font-code);
-            font-size: 0.9rem;
-            font-weight: 500;
-            border: 1px solid var(--border);
-            background: var(--card-bg);
-            color: var(--text-main);
-        }
+  /* CTA */
+  .cta-section { padding: 100px 0; }
+  .cta-box {
+    position: relative; max-width: 720px; margin: 0 auto; padding: 56px 40px;
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--border-accent); border-radius: 16px;
+    text-align: center; overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute; width: 600px; height: 600px; top: 50%; left: 50%;
+    margin-top: -300px; margin-left: -300px;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 212, 170, 0.25) 0%, transparent 55%);
+    animation: glow-rotate 20s linear infinite; pointer-events: none; z-index: 0; filter: blur(20px);
+  }
+  @keyframes glow-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .cta-content { position: relative; z-index: 1; }
+  .cta-title { font-size: clamp(28px, 4vw, 36px); font-weight: 700; margin-bottom: 12px; letter-spacing: -0.02em; color: var(--text); }
+  .cta-subtitle { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; }
+  .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; font-family: var(--font-sans);
+  }
+  .btn-primary { background: var(--accent); color: #ffffff; border: 1px solid var(--accent); }
+  .btn-primary:hover { box-shadow: 0 0 30px rgba(0, 212, 170, 0.4); transform: translateY(-2px); }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-        .btn-primary {
-            background: var(--accent);
-            color: #000;
-            border-color: var(--accent);
-        }
+  .footer {
+    border-top: 1px solid var(--border); padding: 32px 24px;
+    text-align: center; color: var(--text-muted); font-size: 14px;
+    background: var(--bg); position: relative; z-index: 2;
+  }
+  .footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .footer a:hover { text-decoration: underline; }
 
-        .btn:hover { transform: translateY(-2px); }
+  @media (max-width: 768px) {
+    .demo-head { grid-template-columns: 1fr; gap: 32px; align-items: start; }
+    .demo-stage-wrap { height: 56vh; min-height: 380px; }
+    .hud { font-size: 10px; padding: 6px 9px; }
+    .hud-br, .hud-tc { display: none; }
+    .terminal-body { height: 380px; padding: 16px; }
+    .terminal-content { font-size: 11px; }
+    .cta-box { padding: 40px 24px; }
+    .cta-buttons { flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .section { padding: 64px 0; }
+    .scroll-demo-section { padding-top: 64px; }
+    .hero { padding: 48px 0 40px; }
+    .terminal-badges { gap: 8px; }
+    .term-badge { font-size: 11px; padding: 5px 10px; }
+  }
 
-        /* Canvas Background */
-        #bg-canvas {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 50%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.3;
-        }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 
-        /* Features Grid */
-        .features {
-            padding: 4rem 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 2rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 2rem;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 10px 30px -10px rgba(0, 212, 170, 0.1);
-        }
-
-        .card-icon {
-            font-size: 1.5rem;
-            color: var(--accent);
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Plot Containers inside Cards */
-        .plot-box {
-            background: #000;
-            border: 1px solid #222;
-            border-radius: 4px;
-            height: 200px;
-            width: 100%;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .plot-box svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Terminal Section */
-        .terminal-section {
-            padding: 4rem 0;
-        }
-
-        .terminal-window {
-            background: #0f0f0f;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1.5rem;
-            font-family: var(--font-code);
-            font-size: 0.85rem;
-            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
-        }
-
-        .terminal-header {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 1rem;
-        }
-
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .red { background: #ff5f56; }
-        .yellow { background: #ffbd2e; }
-        .green { background: #27c93f; }
-
-        .code-line {
-            display: block;
-            margin-bottom: 0.5rem;
-            opacity: 0;
-            animation: fadeIn 0.5s forwards;
-        }
-
-        .cmd { color: var(--accent); }
-        .arg { color: #fff; }
-        .out { color: var(--text-muted); }
-        .success { color: #27c93f; }
-
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        /* Footer */
-        footer {
-            padding: 4rem 0;
-            border-top: 1px solid var(--border);
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .features { grid-template-columns: 1fr; }
-            #bg-canvas { width: 100%; opacity: 0.1; }
-        }
-    </style>
+</style>
+<style>
+  .hero h1 { font-size: clamp(44px, 8.5vw, 100px) !important; }
+  .law-tags { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top: 14px; }
+  .law-tag { font-family: var(--font-mono); font-size: 11px; padding: 5px 11px; border-radius: 100px; background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
+  .law-tag.on { background: var(--accent-soft); color: var(--accent); border-color: var(--border-accent); }
+  .flow { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 8px; }
+  @media (max-width: 900px) { .flow { grid-template-columns: 1fr 1fr; } }
+  .flow-step { background: var(--term-bg); border: 1px solid var(--term-border); border-radius: var(--radius-sm); padding: 16px; color: var(--term-text); }
+  .flow-step .fs-n { font-family: var(--font-mono); color: var(--accent); font-size: 11px; letter-spacing: .14em; display:block; margin-bottom: 8px; }
+  .flow-step h4 { font-size: 14px; margin-bottom: 6px; font-weight: 600; }
+  .flow-step p { font-size: 12px; color: var(--term-text-sec); line-height: 1.5; }
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <div class="logo">NonLinear<span>Section</span></div>
-            <nav class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#demo">Demo</a>
-                <a href="https://github.com/DomenicoGaudioso" target="_blank">GitHub</a>
-            </nav>
-        </header>
+<div class="docbar">
+  <a href="../">← ing. Domenico Gaudioso</a>
+  <span>NonLinearSection · analisi di sezioni</span>
+  <a href="https://github.com/DomenicoGaudioso/SectionTool">Repository sorgente →</a>
+</div>
 
-        <!-- Hero -->
-        <section class="hero">
-            <canvas id="bg-canvas"></canvas>
-            <h1>Advanced Structural<br>Analysis Tools.</h1>
-            <p>
-                Suite di strumenti open-source per l'analisi non lineare di sezioni in cemento armato. 
-                Calcolo domini M-N, campi tensionali e curve momento-curvatura con precisione scientifica.
-            </p>
-            <div class="btn-group">
-                <a href="https://github.com/DomenicoGaudioso/SectionTool" class="btn btn-primary">SectionTool</a>
-                <a href="https://github.com/DomenicoGaudioso/VSP_VerSectionPlus" class="btn">VSP Core</a>
-            </div>
-        </section>
+<!-- HERO -->
+<section class="hero" id="heroSection">
+  <canvas id="meshCanvas"></canvas>
+  <div class="container hero-content">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      StrutturaNL · legami non lineari · N-M · M-χ
+    </div>
+    <h1>NonLinearSection</h1>
+    <p class="subtitle">L'analisi non lineare delle sezioni in calcestruzzo armato, calcestruzzo armato precompresso, acciaio e miste. Legami σ-ε reali, curva momento-curvatura, domini di interazione N-M e biassiali N-Mx-My.</p>
 
-        <!-- Features Grid with Plots -->
-        <section id="features" class="features">
-            
-            <!-- Card 1: Sezione -->
-            <div class="card">
-                <span class="card-icon">❖</span>
-                <h3>Modellazione Parametrica</h3>
-                <p>Definizione geometrica precisa di sezioni rettangolari, circolari o arbitrary con disposizione dettagliata delle armature.</p>
-                <div class="plot-box">
-                    <svg viewBox="0 0 300 200">
-                        <defs>
-                            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#222" stroke-width="1"/>
-                            </pattern>
-                        </defs>
-                        <rect width="300" height="200" fill="url(#grid)" />
-                        <!-- Concrete -->
-                        <rect x="100" y="40" width="100" height="120" fill="none" stroke="#00d4aa" stroke-width="2" />
-                        <!-- Rebars -->
-                        <circle cx="115" cy="55" r="4" fill="#fff" />
-                        <circle cx="150" cy="55" r="4" fill="#fff" />
-                        <circle cx="185" cy="55" r="4" fill="#fff" />
-                        <circle cx="115" cy="145" r="4" fill="#fff" />
-                        <circle cx="150" cy="145" r="4" fill="#fff" />
-                        <circle cx="185" cy="145" r="4" fill="#fff" />
-                        <!-- Axis -->
-                        <line x1="90" y1="100" x2="210" y2="100" stroke="#444" stroke-width="1" stroke-dasharray="4" />
-                        <text x="220" y="104" fill="#666" font-size="10" font-family="monospace">NA</text>
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Card 2: Dominio M-N -->
-            <div class="card">
-                <span class="card-icon">∑</span>
-                <h3>Domini di Resistenza</h3>
-                <p>Calcolo dell'inviluppo limite N-M secondo EC2. Verifica immediata dello stato di sollecitazione rispetto alla capacità portante.</p>
-                <div class="plot-box">
-                    <svg viewBox="0 0 300 200">
-                        <rect width="300" height="200" fill="url(#grid)" />
-                        <!-- Axes -->
-                        <line x1="40" y1="180" x2="260" y2="180" stroke="#444" stroke-width="1" />
-                        <line x1="40" y1="180" x2="40" y2="20" stroke="#444" stroke-width="1" />
-                        <!-- Domain Curve -->
-                        <path d="M 40 180 Q 100 180 150 100 Q 180 40 220 30 L 240 180 Z" 
-                              fill="rgba(0, 212, 170, 0.1)" stroke="#00d4aa" stroke-width="2" />
-                        <!-- Point -->
-                        <circle cx="150" cy="110" r="5" fill="#fff" />
-                        <line x1="150" y1="110" x2="150" y2="180" stroke="#fff" stroke-width="1" stroke-dasharray="2" />
-                        <text x="155" y="105" fill="#fff" font-size="10" font-family="monospace">Work Point</text>
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Card 3: Stress Field -->
-            <div class="card">
-                <span class="card-icon">σ</span>
-                <h3>Campo Tensionale</h3>
-                <p>Visualizzazione dei diagrammi di deformazione (ε) e tensione (σ) nel calcestruzzo e nell'acciaio per ogni step iterativo.</p>
-                <div class="plot-box">
-                    <svg viewBox="0 0 300 200">
-                        <rect width="300" height="200" fill="url(#grid)" />
-                        <!-- Section -->
-                        <rect x="80" y="40" width="60" height="120" fill="none" stroke="#666" stroke-width="1" />
-                        <!-- Strain Diagram -->
-                        <path d="M 60 40 L 90 100 L 60 160" fill="none" stroke="#00d4aa" stroke-width="2" />
-                        <line x1="60" y1="40" x2="60" y2="160" stroke="#333" stroke-width="1" />
-                        <!-- Labels -->
-                        <text x="50" y="100" fill="#00d4aa" font-size="10" font-family="monospace" transform="rotate(-90 50 100)">ε</text>
-                        <text x="150" y="100" fill="#fff" font-size="10" font-family="monospace">Deformazioni Piane</text>
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Card 4: M-Chi -->
-            <div class="card">
-                <span class="card-icon">∫</span>
-                <h3>Curva Momento-Curvatura</h3>
-                <p>Analisi pushover della sezione per valutare la duttilità, il punto di snervamento e la curvatura ultima.</p>
-                <div class="plot-box">
-                    <svg viewBox="0 0 300 200">
-                        <rect width="300" height="200" fill="url(#grid)" />
-                        <!-- Axes -->
-                        <line x1="40" y1="180" x2="260" y2="180" stroke="#444" stroke-width="1" />
-                        <line x1="40" y1="180" x2="40" y2="20" stroke="#444" stroke-width="1" />
-                        <!-- Curve -->
-                        <path d="M 40 180 C 100 180 150 150 180 80 C 190 60 200 50 210 45" 
-                              fill="none" stroke="#00d4aa" stroke-width="2" />
-                        <!-- Points -->
-                        <circle cx="150" cy="150" r="3" fill="#fff" />
-                        <text x="155" y="145" fill="#888" font-size="9" font-family="monospace">Yield</text>
-                        <circle cx="210" cy="45" r="3" fill="#ff5f56" />
-                        <text x="215" y="40" fill="#888" font-size="9" font-family="monospace">Ultimate</text>
-                    </svg>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Terminal Demo -->
-        <section id="demo" class="terminal-section">
-            <div class="terminal-window">
-                <div class="terminal-header">
-                    <div class="dot red"></div>
-                    <div class="dot yellow"></div>
-                    <div class="dot green"></div>
-                </div>
-                <div id="typewriter">
-                    <span class="code-line cmd">$ sectiontool</span> create --type rect --b 300 --h 400<br>
-                    <span class="code-line out">> Initializing geometry...</span><br>
-                    <span class="code-line out">> Material: C25/30, B450C</span><br>
-                    <span class="code-line cmd">$ versection</span> analyze --load "N=500,M=120"<br>
-                    <span class="code-line out">> Calculating neutral axis depth...</span><br>
-                    <span class="code-line success">> VERIFICATION PASSED (Uls = 1.45)</span><br>
-                    <span class="code-line out">> Generating M-N domain points...</span><br>
-                    <span class="code-line cmd">$ plot</span> --output stress_field.png<br>
-                    <span class="code-line success">> Done in 0.04s</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer>
-            <p>&copy; 2023 Domenico Gaudioso. Open Source Engineering Tools.</p>
-            <p style="margin-top: 0.5rem; opacity: 0.5;">Built with precision for structural engineers.</p>
-        </footer>
+    <div class="terminal-wrap" id="terminalWrap">
+      <div class="terminal-glow"></div>
+      <div class="terminal" id="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="terminal-title">NonLinearSection — sezioni non lineari</div>
+        </div>
+        <div class="terminal-body">
+          <div class="perspective-grid"></div>
+          <div class="terminal-content" id="terminalContent"></div>
+          <div class="scanlines"></div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Simple Canvas Animation for Background (Abstract Section Rotation)
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        
-        let width, height;
-        let angle = 0;
+    <div class="terminal-badges">
+      <span class="term-badge">CA / CAP / Acciaio</span>
+      <span class="term-badge">Curva M-χ</span>
+      <span class="term-badge">Dominio N-M</span>
+      <span class="term-badge">Validato INCA2</span>
+    </div>
+    <div class="law-tags" id="heroLaws"></div>
+  </div>
+</section>
 
-        function resize() {
-            width = canvas.width = canvas.offsetWidth;
-            height = canvas.height = canvas.offsetHeight;
+<!-- DEMO 1 -->
+<section class="scroll-demo-section" id="demo1">
+  <div class="container demo-head-zone">
+    <div class="demo-head">
+      <div class="demo-text">
+        <span class="demo-label reveal-up d1">CASE STUDY 01 · SEZIONE & MATERIALI</span>
+        <h2 class="demo-title reveal-up d2">Geometria Arbitraria, Legami Veri</h2>
+        <p class="demo-desc reveal-up d3">
+          Poligoni con fori, cerchi e anelli, gruppi di barre, trefoli di precompressione, getti successivi. Su ogni fibra agisce la legge σ-ε del suo materiale: parabola-rettangolo EC2/DIN, acciaio elastoplastico con incrudimento, tension stiffening della zona tesa.
+        </p>
+      </div>
+      <div class="demo-terminal reveal-up d3">
+        <div class="demo-terminal-header">
+          <div class="dots">
+            <span style="background:#ff5f57"></span>
+            <span style="background:#febc2e"></span>
+            <span style="background:#28c840"></span>
+          </div>
+          <span>nls — sezione</span>
+        </div>
+        <div class="demo-terminal-body">
+          <div><span class="dt-prompt">➜</span> <span class="dt-cmd" id="t1cmd"></span><span class="dt-cursor"></span></div>
+          <div class="dt-out" id="t1out1" style="opacity:0">✓ Poligono + foro + 2 gruppi barre</div>
+          <div class="dt-out" id="t1out2" style="opacity:0">✓ Leggi: Parabel-Rechteck EC2 · B500B</div>
+          <div class="dt-out good" id="t1out3" style="opacity:0">✓ Discretizzazione: 120 fettucce · 4 sottocelle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="demo-stage-wrap">
+    <canvas id="stage1"></canvas>
+    <canvas id="gl1" class="gl-layer"></canvas>
+    <div class="scanlines"></div>
+    <div class="stage-vignette"></div>
+    <span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+    <div class="hud hud-tl"><span class="rec"></span> CASE 01 · SEZIONE · LEGAMI σ-ε</div>
+    <div class="hud hud-tc" id="vw1">VISTA 2D · SEZIONE</div>
+    <div class="hud hud-tr" id="tc1">00:00</div>
+    <div class="hud hud-bl" id="ro1">materiale — · ε — ‰</div>
+    <div class="hud hud-br">NonLinearSection · live simulation</div>
+  </div>
+</section>
+
+<!-- DEMO 2 -->
+<section class="scroll-demo-section alt-bg" id="demo2">
+  <div class="container demo-head-zone">
+    <div class="demo-head">
+      <div class="demo-text">
+        <span class="demo-label reveal-up d1">CASE STUDY 02 · MOMENTO-CURVATURA</span>
+        <h2 class="demo-title reveal-up d2">Curva M-χ Fino Alla Rottura</h2>
+        <p class="demo-desc reveal-up d3">
+          Il piano delle deformazioni ε = ε₀ + κ·y è in equilibrio con (N, M) assegnati: Newton ibrido e continuazione seguono il ramo post-fessurazione. Tension stiffening, viscosità con φ e curvatura ultima per la duttilità della sezione.
+        </p>
+      </div>
+      <div class="demo-terminal reveal-up d3">
+        <div class="demo-terminal-header">
+          <div class="dots">
+            <span style="background:#ff5f57"></span>
+            <span style="background:#febc2e"></span>
+            <span style="background:#28c840"></span>
+          </div>
+          <span>nls — curva M-χ</span>
+        </div>
+        <div class="demo-terminal-body">
+          <div><span class="dt-prompt">➜</span> <span class="dt-cmd" id="t2cmd"></span><span class="dt-cursor"></span></div>
+          <div class="dt-out" id="t2out1" style="opacity:0">✓ Stato deformativo: (ε₀, κ) su (N, M)</div>
+          <div class="dt-out" id="t2out2" style="opacity:0">✓ Fessurazione + Mitwirkung (tension stiffening)</div>
+          <div class="dt-out good" id="t2out3" style="opacity:0">✓ M-u = 412 kNm · χ_u = 48.2‰ · μ = 7.1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="demo-stage-wrap">
+    <canvas id="stage2"></canvas>
+    <canvas id="gl2" class="gl-layer"></canvas>
+    <div class="scanlines"></div>
+    <div class="stage-vignette"></div>
+    <span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+    <div class="hud hud-tl"><span class="rec"></span> CASE 02 · M-χ · N = COST</div>
+    <div class="hud hud-tc" id="vw2">VISTA 2D · ANALISI</div>
+    <div class="hud hud-tr" id="tc2">00:00</div>
+    <div class="hud hud-bl" id="ro2">χ — ‰ · M — kNm</div>
+    <div class="hud hud-br">NonLinearSection · live simulation</div>
+  </div>
+</section>
+
+<!-- DEMO 3 -->
+<section class="scroll-demo-section" id="demo3">
+  <div class="container demo-head-zone">
+    <div class="demo-head">
+      <div class="demo-text">
+        <span class="demo-label reveal-up d1">CASE STUDY 03 · DOMINI DI INTERAZIONE</span>
+        <h2 class="demo-title reveal-up d2">N-M, Biassiale e Verifica del Punto</h2>
+        <p class="demo-desc reveal-up d3">
+          Dominio di interazione N-M allo SLU con diagramma limite delle deformazioni EC2, fino alla superficie N-Mx-My in pressoflessione deviata. Il punto di carico cade dentro o fuori: il calcolo lo dice, con le Grenzdehnungen riportate.
+        </p>
+      </div>
+      <div class="demo-terminal reveal-up d3">
+        <div class="demo-terminal-header">
+          <div class="dots">
+            <span style="background:#ff5f57"></span>
+            <span style="background:#febc2e"></span>
+            <span style="background:#28c840"></span>
+          </div>
+          <span>nls — dominio</span>
+        </div>
+        <div class="demo-terminal-body">
+          <div><span class="dt-prompt">➜</span> <span class="dt-cmd" id="t3cmd"></span><span class="dt-cursor"></span></div>
+          <div class="dt-out" id="t3out1" style="opacity:0">✓ Dominio N-M: 64 punti · legge di progetto</div>
+          <div class="dt-out" id="t3out2" style="opacity:0">✓ Superficie N-Mx-My: 38 angoli</div>
+          <div class="dt-out good" id="t3out3" style="opacity:0">✓ Verifica (N, My, Mz): assorbito 0.83 ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="demo-stage-wrap">
+    <canvas id="stage3"></canvas>
+    <canvas id="gl3" class="gl-layer"></canvas>
+    <div class="scanlines"></div>
+    <div class="stage-vignette"></div>
+    <span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
+    <div class="hud hud-tl"><span class="rec"></span> CASE 03 · N-M · N-Mx-My</div>
+    <div class="hud hud-tc" id="vw3">VISTA 2D · DOMINIO</div>
+    <div class="hud hud-tr" id="tc3">00:00</div>
+    <div class="hud hud-bl" id="ro3">N — kN · M — kNm · ratio —</div>
+    <div class="hud hud-br">NonLinearSection · live simulation</div>
+  </div>
+</section>
+
+<!-- FLUSSO -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Dal materiale alla verifica</h2>
+      <p class="section-subtitle">Quattro passaggi, nessuna scorciatoia: ogni fibra della sezione risponde con la propria legge costitutiva.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-step">
+        <span class="fs-n">01 · GEOMETRIA</span>
+        <h4>Sezione arbitraria</h4>
+        <p>Poligoni con fori, cerchi/anelli, barre a gruppi, trefoli, getti successivi. File .inc INCA2 importabili.</p>
+      </div>
+      <div class="flow-step">
+        <span class="fs-n">02 · MATERIALI</span>
+        <h4>Legami σ-ε non lineari</h4>
+        <p>Parabola-rettangolo EC2 e DIN 1045, valori medi o di progetto, acciaio con incrudimento, precompressione.</p>
+      </div>
+      <div class="flow-step">
+        <span class="fs-n">03 · EQUILIBRIO</span>
+        <h4>Piano delle deformazioni</h4>
+        <p>ε₀ e κ in equilibrio con N, M (e My, Mz): integrazione sulle fettucce, Newton ibrido con continuazione.</p>
+      </div>
+      <div class="flow-step">
+        <span class="fs-n">04 · OUTPUT</span>
+        <h4>Curve, domini, esiti</h4>
+        <p>Profilo tensionale σ(y), curva M-χ, dominio N-M, superficie N-Mx-My, verifica del punto e limiti di deformazione.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Perché NonLinearSection?</h2>
+      <p class="section-subtitle">Il motore di sezione di StrutturaNL, con gli algoritmi ricondotti al programma madre e una suite di convalida dedicata.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧬</div>
+        <h3 class="feature-title">Legami Non Lineari</h3>
+        <p class="feature-desc">Parabola-rettangolo EC2/DIN 1045 (medi e progetto), acciaio elastoplastico con incrudimento, leggi lineari elastiche per il confronto.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪨</div>
+        <h3 class="feature-title">Multi-Materiale & Getti</h3>
+        <p class="feature-desc">Ogni getto ha geometria e legge propria, con predeformazioni (Vordehnung). Trefoli di precompressione e barre con legge indipendente.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌀</div>
+        <h3 class="feature-title">Fessurazione & Viscosità</h3>
+        <p class="feature-desc">Riduzione del ramo teso del calcestruzzo (tension stiffening, Mitwirkung) e viscosità semplificata con φ per il comportamento a lungo termine.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3 class="feature-title">Curva M-χ & Dutilità</h3>
+        <p class="feature-desc">Momento-curvatura a sforzo normale assegnato: fessurazione, snervamento, ramo ultimo e curvatura ultima per la valutazione della duttilità.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧊</div>
+        <h3 class="feature-title">Domini N-M e N-Mx-My</h3>
+        <p class="feature-desc">Interazione uniassiale allo SLU con diagramma limite EC2 e superficie biassiale per pressoflessione deviata. Verifica del punto con Grenzdehnungen.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3 class="feature-title">Validato su INCA2</h3>
+        <p class="feature-desc">Algoritmi decodificati dal programma di riferimento e suite di convalida dedicata (test INCA2, Stab2D-NL, Dalben). UI Streamlit e grafici matplotlib/plotly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Installazione</h2>
+      <p class="section-subtitle">Una libreria Python pura con UI Streamlit opzionale — o la sezione dentro il tuo telaio non lineare.</p>
+    </div>
+    <div class="code-block">
+      <div class="code-header">
+        <button class="copy-btn" id="copyBtn">Copia</button>
+        <span class="code-label">bash</span>
+      </div>
+      <pre class="code-content" id="codeContent"><span class="code-comment"># Clona SectionTool</span>
+<span class="code-command">git clone https://github.com/DomenicoGaudioso/SectionTool.git</span>
+<span class="code-command">cd SectionTool</span>
+
+<span class="code-comment"># Dipendenze: numpy, scipy + UI (streamlit, pandas, plotly)</span>
+<span class="code-command">pip install numpy scipy streamlit pandas plotly</span>
+
+<span class="code-comment"># Avvia l'interfaccia sezioni (StrutturaNL — Querschnitte)</span>
+<span class="code-command">python -m streamlit run strutturanl/ui/app.py</span>
+
+<span class="code-comment"># Oppure usa il motore in Python</span>
+<span class="code-command">python -c "from strutturanl.analisi import AnalisiSezione; print('ok')"</span>
+
+<span class="code-comment"># Test di convalida (INCA2 · Stab2D-NL · Dalben)</span>
+<span class="code-command">python -m pytest tests</span></pre>
+    </div>
+    <p class="install-note">
+      ℹ️ L'app carica subito l'esempio del manuale (rettangolo 400×600 con 4Ø28) e importa le sezioni <code>.inc</code> di INCA2. <a href="https://github.com/DomenicoGaudioso/SectionTool">Documentazione e sorgenti su GitHub</a>.
+    </p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-box">
+      <div class="cta-glow"></div>
+      <div class="cta-content">
+        <h2 class="cta-title">La tua sezione, senza linearizzazioni</h2>
+        <p class="cta-subtitle">Legami reali, equilibrio esatto del piano deformante, curve e domini che parlano la lingua del progetto.</p>
+        <div class="cta-buttons">
+          <a href="https://github.com/DomenicoGaudioso/SectionTool" class="btn btn-primary" target="_blank" rel="noopener noreferrer">⭐ Vai su GitHub</a>
+          <a href="https://github.com/DomenicoGaudioso/SectionTool/tree/main/strutturanl" class="btn btn-secondary">🐍 Esplora il motore</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  NonLinearSection · SectionTool — creato da <a href="https://github.com/DomenicoGaudioso/SectionTool" target="_blank" rel="noopener noreferrer">Domenico Gaudioso</a> · Parte di <a href="https://civilbox.xyz" target="_blank" rel="noopener noreferrer">civilbox.xyz</a> · <a href="mailto:info@civilbox.xyz">Contattaci</a> · <a href="../">← Sito personale</a>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  const MONO = "'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace";
+  function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+  /* ================= HERO MESH BG ================= */
+  const canvas = document.getElementById('meshCanvas');
+  const ctx = canvas.getContext('2d');
+  const heroSection = document.getElementById('heroSection');
+  let nodes = [];
+  let mouse = { x: null, y: null, radius: 200 };
+  let animationId = null;
+  function resizeCanvas() {
+    canvas.width = heroSection.offsetWidth;
+    canvas.height = heroSection.offsetHeight;
+    initNodes();
+  }
+  class Node {
+    constructor(x, y) {
+      this.x = x; this.y = y;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4;
+      this.size = Math.random() * 1.5 + 1;
+      this.baseColor = 'rgba(10, 10, 15, 0.15)';
+      this.isActive = false;
+    }
+    update() {
+      this.x += this.vx; this.y += this.vy;
+      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      if (mouse.x !== null) {
+        let dx = mouse.x - this.x, dy = mouse.y - this.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < mouse.radius) { this.isActive = true; this.x += dx / 80; this.y += dy / 80; }
+        else this.isActive = false;
+      } else this.isActive = false;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      if (this.isActive) { ctx.fillStyle = '#00d4aa'; ctx.shadowColor = '#00d4aa'; ctx.shadowBlur = 8; }
+      else { ctx.fillStyle = this.baseColor; ctx.shadowBlur = 0; }
+      ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  function initNodes() {
+    nodes = [];
+    let density = Math.floor((canvas.width * canvas.height) / 15000);
+    density = Math.min(Math.max(density, 30), 120);
+    for (let i = 0; i < density; i++) nodes.push(new Node(Math.random() * canvas.width, Math.random() * canvas.height));
+  }
+  function connectNodes() {
+    let maxDist = 130;
+    for (let a = 0; a < nodes.length; a++) {
+      for (let b = a + 1; b < nodes.length; b++) {
+        let dx = nodes[a].x - nodes[b].x, dy = nodes[a].y - nodes[b].y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < maxDist) {
+          let opacity = 1 - (dist / maxDist);
+          if (nodes[a].isActive || nodes[b].isActive) { ctx.strokeStyle = `rgba(0, 212, 170, ${opacity * 0.6})`; ctx.lineWidth = 1; }
+          else { ctx.strokeStyle = `rgba(10, 10, 15, ${opacity * 0.08})`; ctx.lineWidth = 0.5; }
+          ctx.beginPath(); ctx.moveTo(nodes[a].x, nodes[a].y); ctx.lineTo(nodes[b].x, nodes[b].y); ctx.stroke();
         }
-        
-        window.addEventListener('resize', resize);
-        resize();
-
-        function draw() {
-            ctx.clearRect(0, 0, width, height);
-            ctx.strokeStyle = '#00d4aa';
-            ctx.lineWidth = 1;
-            ctx.globalAlpha = 0.2;
-
-            const centerX = width / 2;
-            const centerY = height / 2;
-            
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(angle);
-            
-            // Draw abstract section shape
-            ctx.beginPath();
-            ctx.rect(-60, -80, 120, 160);
-            ctx.stroke();
-            
-            // Draw rebars
-            for(let i = -40; i <= 40; i+=40) {
-                ctx.beginPath();
-                ctx.arc(i, -60, 4, 0, Math.PI * 2);
-                ctx.arc(i, 60, 4, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.restore();
-
-            angle += 0.002;
-            requestAnimationFrame(draw);
+      }
+      if (mouse.x !== null) {
+        let dx = nodes[a].x - mouse.x, dy = nodes[a].y - mouse.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < mouse.radius) {
+          let opacity = 1 - (dist / mouse.radius);
+          ctx.strokeStyle = `rgba(0, 212, 170, ${opacity * 0.8})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(nodes[a].x, nodes[a].y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
+          ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#00d4aa'; ctx.shadowColor = '#00d4aa'; ctx.shadowBlur = 15;
+          ctx.fill(); ctx.shadowBlur = 0;
         }
+      }
+    }
+  }
+  function animateMesh() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    nodes.forEach(node => { node.update(); node.draw(); });
+    connectNodes();
+    animationId = requestAnimationFrame(animateMesh);
+  }
+  heroSection.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top;
+    if (!animationId) animateMesh();
+  });
+  heroSection.addEventListener('mouseleave', () => {
+    mouse.x = null; mouse.y = null;
+    setTimeout(() => {
+      if (mouse.x === null) {
+        cancelAnimationFrame(animationId); animationId = null;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        nodes.forEach(node => node.draw());
+        connectNodes();
+      }
+    }, 1000);
+  });
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  animateMesh();
 
-        draw();
-    </script>
+  /* ================= TERMINALE HERO ================= */
+  const terminal = document.getElementById('terminal');
+  const terminalWrap = document.getElementById('terminalWrap');
+  const canHover = window.matchMedia('(hover: hover)').matches;
+  if (canHover) {
+    terminalWrap.addEventListener('mousemove', (e) => {
+      const rect = terminalWrap.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      terminal.style.transform = `rotateY(${x * 24}deg) rotateX(${-y * 16}deg)`;
+    });
+    terminalWrap.addEventListener('mouseleave', () => { terminal.style.transform = 'rotateY(0deg) rotateX(0deg)'; });
+  }
+  const terminalContent = document.getElementById('terminalContent');
+  let animationActive = true;
+  async function runTerminal(terminalSteps) {
+    while (animationActive) {
+      terminalContent.innerHTML = '';
+      for (const step of terminalSteps) {
+        if (step.type === 'input') {
+          const line = document.createElement('div'); line.className = 'term-line';
+          const prompt = document.createElement('span'); prompt.className = 'term-prompt'; prompt.textContent = '❯ ';
+          const textSpan = document.createElement('span'); textSpan.className = 'term-input';
+          const cursor = document.createElement('span'); cursor.className = 'cursor';
+          line.appendChild(prompt); line.appendChild(textSpan); line.appendChild(cursor);
+          terminalContent.appendChild(line);
+          for (const char of step.text) {
+            if (!animationActive) return;
+            textSpan.textContent += char;
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+            await sleep(28);
+          }
+          cursor.remove();
+          await sleep(280);
+        } else {
+          const line = document.createElement('div');
+          line.className = 'term-line ' + (step.type === 'output-accent' ? 'term-output-accent' : 'term-output');
+          line.textContent = step.text;
+          terminalContent.appendChild(line);
+          terminalContent.scrollTop = terminalContent.scrollHeight;
+          await sleep(140);
+        }
+      }
+      await sleep(7000);
+    }
+  }
+
+  /* ================= COPY ================= */
+  const copyBtn = document.getElementById('copyBtn');
+  const codeContent = document.getElementById('codeContent');
+  copyBtn.addEventListener('click', async () => {
+    const text = codeContent.innerText;
+    const showSuccess = () => {
+      copyBtn.textContent = 'Copiato!';
+      copyBtn.style.color = 'var(--accent)';
+      copyBtn.style.borderColor = 'var(--border-accent)';
+      setTimeout(() => { copyBtn.textContent = 'Copia'; copyBtn.style.color = ''; copyBtn.style.borderColor = ''; }, 2000);
+    };
+    try { await navigator.clipboard.writeText(text); showSuccess(); }
+    catch (err) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text; textarea.style.position = 'fixed'; textarea.style.opacity = '0';
+      document.body.appendChild(textarea); textarea.select();
+      try { document.execCommand('copy'); showSuccess(); }
+      catch (e) { copyBtn.textContent = 'Errore'; setTimeout(() => { copyBtn.textContent = 'Copia'; }, 2000); }
+      document.body.removeChild(textarea);
+    }
+  });
+
+  /* ================= PALETTE & UTILS ================= */
+  function heatRGB(v) {
+    const stops = [[12,40,92],[24,100,196],[0,190,205],[46,212,125],[242,200,44],[246,120,32],[235,52,42]];
+    v = Math.min(1, Math.max(0, v)) * (stops.length - 1);
+    const i = Math.floor(v), f = v - i, a = stops[i], b = stops[Math.min(i + 1, stops.length - 1)];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+  function heatCSS(v, alpha) {
+    const c = heatRGB(v);
+    return 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + (alpha === undefined ? 1 : alpha) + ')';
+  }
+  function timecode(lt) {
+    const m = Math.floor(lt / 60), s = Math.floor(lt % 60);
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp01(v) { return Math.min(1, Math.max(0, v)); }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function poly(ctx2, pts, fill, stroke, lw) {
+    if (!pts.length) return;
+    ctx2.beginPath();
+    ctx2.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx2.lineTo(pts[i][0], pts[i][1]);
+    ctx2.closePath();
+    if (fill) { ctx2.fillStyle = fill; ctx2.fill(); }
+    if (stroke) { ctx2.strokeStyle = stroke; ctx2.lineWidth = lw || 2; ctx2.stroke(); }
+  }
+  function strokeDrawOn(ctx2, pts, progress) {
+    if (!pts.length) return;
+    let per = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      per += Math.hypot(b[0] - a[0], b[1] - a[1]);
+    }
+    const p = clamp01(progress);
+    ctx2.beginPath();
+    ctx2.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx2.lineTo(pts[i][0], pts[i][1]);
+    ctx2.closePath();
+    ctx2.setLineDash([per * p, per]);
+    ctx2.lineDashOffset = 0;
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+  }
+  function hatch(ctx2, x, y, w, h, gap, color) {
+    ctx2.save();
+    ctx2.beginPath(); ctx2.rect(x, y, w, h); ctx2.clip();
+    ctx2.strokeStyle = color; ctx2.lineWidth = 1;
+    for (let i = -h; i < w + h; i += gap) {
+      ctx2.beginPath(); ctx2.moveTo(x + i, y + h); ctx2.lineTo(x + i + h, y); ctx2.stroke();
+    }
+    ctx2.restore();
+  }
+  function label(ctx2, txt, x, y, color, size, align) {
+    ctx2.font = (size || 11) + 'px ' + MONO;
+    ctx2.fillStyle = color || 'rgba(240,240,245,0.85)';
+    ctx2.textAlign = align || 'left';
+    ctx2.fillText(txt, x, y);
+    ctx2.textAlign = 'left';
+  }
+
+  /* ============================================================
+     NLS — STAGE 1 · SEZIONE + LEGAMI σ-ε
+     ============================================================ */
+  const NLS_LAWS = [
+    { key: 'Parabel-Rechteck EC2', note: 'cls C30/37 · valori medi' },
+    { key: 'B500B incrudente',     note: 'acciaio armatura' },
+    { key: 'Lin-Elastico',         note: 'confronto elastico' }
+  ];
+  function drawSigmaEpsAxes(ctx2, x0, y0, w, h) {
+    ctx2.strokeStyle = 'rgba(240,240,245,0.35)'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(x0, y0 - h * 0.35); ctx2.lineTo(x0, y0 + h); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(x0 - w * 0.35, y0); ctx2.lineTo(x0 + w, y0); ctx2.stroke();
+    label(ctx2, 'ε', x0 + w + 4, y0 + 4, 'rgba(138,138,154,1)', 11);
+    label(ctx2, 'σ', x0 - 12, y0 - h * 0.35 - 6, 'rgba(138,138,154,1)', 11);
+    // compressione a sinistra / trazione a destra (NLS: trazione +)
+    label(ctx2, '−', x0 - w * 0.3, y0 + 14, 'rgba(138,138,154,1)', 10);
+    label(ctx2, '+', x0 + w * 0.9, y0 + 14, 'rgba(138,138,154,1)', 10);
+  }
+  function concreteCurve(eps) {
+    // parabola-rettangolo EC2 semplificato: εc1=-1.75‰, εcu=-3.5‰, fcm in "unità"
+    const e1 = -0.00175, eu = -0.0035, f = 1.0;
+    if (eps > 0) return Math.min(eps * 40, 0.25);      // trazione ridotta (tension stiffening)
+    if (eps >= e1) return f * (1 - Math.pow(1 - eps / e1, 2));
+    if (eps >= eu) return f;
+    return 0;
+  }
+  function steelCurve(eps) {
+    const ey = 0.00217, es = 210, f = 1.0;
+    if (Math.abs(eps) <= ey) return eps * es * 0.35;
+    const s = Math.sign(eps);
+    const over = (Math.abs(eps) - ey) / 0.02;
+    return s * f * (1 + 0.35 * Math.min(over, 1));
+  }
+  function drawLawCurves(ctx2, x0, y0, w, h, prog) {
+    drawSigmaEpsAxes(ctx2, x0, y0, w, h);
+    // curva cls (compressione a sinistra: x = x0 - |ε|*scale)
+    const sc = w / 0.0045, sv = h / 1.3;
+    const n = Math.floor(48 * prog);
+    ctx2.strokeStyle = '#00d4aa'; ctx2.lineWidth = 2;
+    ctx2.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const eps = -0.0045 * (i / 48);
+      const x = x0 + eps * sc, y = y0 + concreteCurve(eps) * sv;
+      if (i === 0) ctx2.moveTo(x, y); else ctx2.lineTo(x, y);
+    }
+    ctx2.stroke();
+    // trazione cls (tension stiffening)
+    if (prog > 0.6) {
+      const p2 = clamp01((prog - 0.6) / 0.4);
+      ctx2.strokeStyle = 'rgba(0,212,170,0.55)'; ctx2.lineWidth = 1.6;
+      ctx2.beginPath();
+      for (let i = 0; i <= 20 * p2; i++) {
+        const eps = 0.0006 * (i / 20);
+        const x = x0 + eps * sc, y = y0 + concreteCurve(eps) * sv;
+        if (i === 0) ctx2.moveTo(x, y); else ctx2.lineTo(x, y);
+      }
+      ctx2.stroke();
+    }
+    // acciaio
+    if (prog > 0.35) {
+      const p3 = clamp01((prog - 0.35) / 0.5);
+      ctx2.strokeStyle = '#f2c82c'; ctx2.lineWidth = 2;
+      ctx2.beginPath();
+      for (let i = 0; i <= 40 * p3; i++) {
+        const eps = -0.004 + 0.024 * (i / 40);
+        const x = x0 + eps * sc * 0.55, y = y0 - steelCurve(eps) * sv * 0.5;
+        if (i === 0) ctx2.moveTo(x, y); else ctx2.lineTo(x, y);
+      }
+      ctx2.stroke();
+    }
+    // punti notevoli
+    if (prog > 0.85) {
+      label(ctx2, 'εc1', x0 - 0.00175 * sc - 16, y0 + h + 16, 'rgba(0,212,170,0.9)', 9);
+      label(ctx2, 'εcu', x0 - 0.0035 * sc - 16, y0 + h + 16, 'rgba(0,212,170,0.9)', 9);
+      label(ctx2, 'εy', x0 - 0.00217 * sc * 0.55 - 10, y0 + 28, 'rgba(242,200,44,0.9)', 9);
+    }
+  }
+  function drawRectSection(ctx2, cx, cy, w, h, strainK, strainE0, prog) {
+    // sezione rettangolare + 4 barre, con piano deformante sovrapposto
+    ctx2.fillStyle = '#6b6f7a';
+    ctx2.fillRect(cx - w / 2, cy - h / 2, w, h);
+    hatch(ctx2, cx - w / 2, cy - h / 2, w, h, 10, 'rgba(240,240,245,0.22)');
+    ctx2.strokeStyle = 'rgba(0,212,170,0.85)'; ctx2.lineWidth = 1.6;
+    ctx2.strokeRect(cx - w / 2, cy - h / 2, w, h);
+    // barre 4Ø28 (2+2)
+    const r = 5;
+    ctx2.fillStyle = '#f2c82c';
+    const barX = [cx - w * 0.3, cx + w * 0.3];
+    const barY = [cy - h * 0.36, cy + h * 0.36];
+    for (const bx of barX) for (const by of barY) {
+      ctx2.beginPath(); ctx2.arc(bx, by, r, 0, Math.PI * 2); ctx2.fill();
+      ctx2.strokeStyle = 'rgba(10,10,15,0.6)'; ctx2.stroke();
+    }
+    label(ctx2, '4Ø28', cx + w / 2 + 10, cy + 4, 'rgba(242,200,44,0.9)', 10);
+    label(ctx2, '400 × 600', cx - w / 2, cy - h / 2 - 10, 'rgba(138,138,154,1)', 10);
+
+    // fettucce di integrazione
+    const nf = 10;
+    for (let i = 0; i < nf; i++) {
+      const y = cy - h / 2 + (i + 0.5) * h / nf;
+      const eps = strainE0 + strainK * (y - cy) / 1000;
+      const s = concreteCurve(eps);
+      ctx2.globalAlpha = 0.35;
+      ctx2.fillStyle = heatCSS(clamp01(0.5 + s * 0.5), 0.7);
+      ctx2.fillRect(cx - w / 2, y - h / nf / 2, w * clamp01(0.25 + Math.abs(s) * 0.75), h / nf);
+      ctx2.globalAlpha = 1;
+    }
+    // piano deformante a destra
+    const px = cx + w * 0.85;
+    ctx2.strokeStyle = 'rgba(240,240,245,0.4)'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(px, cy - h / 2 - 8); ctx2.lineTo(px, cy + h / 2 + 8); ctx2.stroke();
+    const dyTop = strainE0 * 3000 - strainK * 1.6, dyBot = strainE0 * 3000 + strainK * 1.6;
+    ctx2.strokeStyle = '#00d4aa'; ctx2.lineWidth = 2;
+    ctx2.beginPath(); ctx2.moveTo(px + dyTop, cy - h / 2); ctx2.lineTo(px + dyBot, cy + h / 2); ctx2.stroke();
+    label(ctx2, 'ε(y) = ε₀ + κ·y', px - 30, cy - h / 2 - 18, 'rgba(0,212,170,0.9)', 9);
+  }
+  function drawSectionStage(ctx2, W, H, lt, gt, st) {
+    ctx2.clearRect(0, 0, W, H);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.03)'; ctx2.lineWidth = 1;
+    for (let x = 0; x < W; x += 42) { ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke(); }
+    for (let y = 0; y < H; y += 42) { ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke(); }
+
+    const seg = 6.0;
+    const idx = Math.floor(lt / seg) % NLS_LAWS.length;
+    const law = NLS_LAWS[idx];
+    const fp = clamp01((lt % seg) / 2.0);
+    // curvature animata
+    const k = 2.2 * ease(clamp01((lt % seg) / 4)) * (idx === 1 ? 1.5 : 1);
+    const e0 = -0.4 * Math.sin(gt * 0.35);
+
+    drawRectSection(ctx2, W * 0.26, H * 0.5, Math.min(W * 0.16, 130), Math.min(H * 0.5, 240), k, e0, fp);
+    drawLawCurves(ctx2, W * 0.66, H * 0.55, W * 0.2, H * 0.26, fp);
+
+    label(ctx2, law.key, W * 0.66, H * 0.16, '#00d4aa', 13);
+    label(ctx2, law.note, W * 0.66, H * 0.16 + 18, 'rgba(138,138,154,1)', 10);
+
+    const ro = document.getElementById('ro1');
+    if (ro) ro.innerHTML = '<b>' + law.key + '</b> · κ = <b>' + k.toFixed(2) + '</b> ‰';
+  }
+
+  /* ============================================================
+     NLS — STAGE 2 · CURVA MOMENTO-CURVATURA
+     ============================================================ */
+  function mkCurvePoint(u) {
+    // u in [0,1] → (chi, M) di una curva M-χ tipica C30/37 + B500B
+    // tratti: elastico non fessurato → fessurazione → post-fessurazione → snervamento → ramo piatto/duro → rottura
+    let chi, M;
+    if (u < 0.14) { const t = u / 0.14; chi = 0.55 * t; M = 120 * t; }
+    else if (u < 0.2) { const t = (u - 0.14) / 0.06; chi = 0.55 + 0.25 * t; M = 120 - 35 * t; }
+    else if (u < 0.52) { const t = (u - 0.2) / 0.32; chi = 0.8 + 4.5 * t; M = 85 + 175 * Math.pow(t, 0.7); }
+    else if (u < 0.72) { const t = (u - 0.52) / 0.20; chi = 5.3 + 8 * t; M = 260 + 95 * t; }
+    else if (u < 0.9) { const t = (u - 0.72) / 0.18; chi = 13.3 + 15 * t; M = 355 + 45 * t; }
+    else { const t = (u - 0.9) / 0.1; chi = 28.3 + 22 * t; M = 400 - 25 * t * t; }
+    return { chi, M };
+  }
+  function drawMkStage(ctx2, W, H, lt, gt, st) {
+    ctx2.clearRect(0, 0, W, H);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.03)'; ctx2.lineWidth = 1;
+    for (let x = 0; x < W; x += 42) { ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke(); }
+    for (let y = 0; y < H; y += 42) { ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke(); }
+
+    const x0 = W * 0.12, y0 = H * 0.82, gw = W * 0.5, gh = H * 0.62;
+    // assi
+    ctx2.strokeStyle = 'rgba(240,240,245,0.35)'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(x0, y0 - gh); ctx2.lineTo(x0, y0); ctx2.lineTo(x0 + gw, y0); ctx2.stroke();
+    label(ctx2, 'χ [‰]', x0 + gw - 44, y0 + 24, 'rgba(138,138,154,1)', 11);
+    label(ctx2, 'M [kNm]', x0 - 60, y0 - gh - 8, 'rgba(138,138,154,1)', 11);
+    label(ctx2, '0', x0 - 14, y0 + 14, 'rgba(138,138,154,1)', 10);
+    label(ctx2, 'Mcr', x0 - 34, y0 - gh * 0.32, 'rgba(138,138,154,1)', 9);
+    label(ctx2, 'My', x0 - 28, y0 - gh * 0.68, 'rgba(138,138,154,1)', 9);
+    ctx2.setLineDash([4, 4]);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx2.beginPath(); ctx2.moveTo(x0, y0 - gh * 0.32); ctx2.lineTo(x0 + gw, y0 - gh * 0.32); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(x0, y0 - gh * 0.68); ctx2.lineTo(x0 + gw, y0 - gh * 0.68); ctx2.stroke();
+    ctx2.setLineDash([]);
+
+    // animazione: tracciato della curva
+    const cycle = 12;
+    const u = clamp01((lt % cycle) / 8.5);
+    const xw = gw / 34, yh = gh / 430;
+    const pts = [];
+    for (let i = 0; i <= 90 * u; i++) {
+      const p = mkCurvePoint(i / 90);
+      pts.push([x0 + p.chi * xw, y0 - p.M * yh]);
+    }
+    if (pts.length > 1) {
+      ctx2.strokeStyle = '#00d4aa'; ctx2.lineWidth = 2.4;
+      ctx2.beginPath(); ctx2.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx2.lineTo(pts[i][0], pts[i][1]);
+      ctx2.stroke();
+      // punto corrente
+      const c = pts[pts.length - 1];
+      const cp = mkCurvePoint(u);
+      ctx2.fillStyle = '#00d4aa';
+      ctx2.shadowColor = '#00d4aa'; ctx2.shadowBlur = 12;
+      ctx2.beginPath(); ctx2.arc(c[0], c[1], 5, 0, Math.PI * 2); ctx2.fill();
+      ctx2.shadowBlur = 0;
+
+      // sezione in miniatura con stato corrente
+      const sx = W * 0.78, sy = H * 0.42;
+      const k = cp.chi * 0.28, e0 = -cp.M * 0.0011;
+      drawRectSection(ctx2, sx, sy, 88, 150, k, e0, 1);
+      label(ctx2, 'stato corrente', sx - 52, sy - 92, 'rgba(138,138,154,1)', 10);
+
+      // marker sul piano deformante
+      label(ctx2, 'εcu = −3.5‰', sx + 62, sy + 82, 'rgba(235,52,42,0.85)', 9);
+
+      const ro = document.getElementById('ro2');
+      if (ro) ro.innerHTML = 'χ = <b>' + cp.chi.toFixed(1) + '</b> ‰ · M = <b>' + cp.M.toFixed(0) + '</b> kNm';
+    }
+    // annotazioni tratti
+    label(ctx2, 'fessurazione', x0 + 18, y0 - gh * 0.36, 'rgba(242,200,44,0.8)', 9);
+    label(ctx2, 'snervamento', x0 + gw * 0.5, y0 - gh * 0.74, 'rgba(242,200,44,0.8)', 9);
+    label(ctx2, 'ramo ultimo · duttilità', x0 + gw * 0.55, y0 - gh * 0.9, 'rgba(0,212,170,0.9)', 10);
+  }
+
+  /* ============================================================
+     NLS — STAGE 3 · DOMINIO N-M (2D) / 3D
+     ============================================================ */
+  function domainNM(angle) {
+    // profilo di dominio N-M (N positiva compressione nel plot verso l'alto)
+    // theta = 0 → M max (N≈0), theta = π/2 → N max (M≈0)
+    const t = angle;
+    const N = 2500 * Math.cos(t) * (0.55 + 0.45 * Math.abs(Math.cos(t)));
+    const M = 430 * Math.sin(t) * (0.65 + 0.35 * Math.sin(t * 0.5 + 0.4));
+    return { N, M };
+  }
+  function drawDomainStage(ctx2, W, H, lt, gt, st) {
+    ctx2.clearRect(0, 0, W, H);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.03)'; ctx2.lineWidth = 1;
+    for (let x = 0; x < W; x += 42) { ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke(); }
+    for (let y = 0; y < H; y += 42) { ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke(); }
+
+    const cx = W * 0.38, cy = H * 0.52, xs = (W * 0.34) / 480, ys = (H * 0.34) / 2600;
+    // assi M orizzontale, N verticale (compressione verso l'alto)
+    ctx2.strokeStyle = 'rgba(240,240,245,0.35)'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(cx - W * 0.3, cy); ctx2.lineTo(cx + W * 0.3, cy); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(cx, cy - H * 0.38); ctx2.lineTo(cx, cy + H * 0.36); ctx2.stroke();
+    label(ctx2, 'M [kNm]', cx + W * 0.3 - 52, cy - 12, 'rgba(138,138,154,1)', 11);
+    label(ctx2, 'N [kN]', cx + 10, cy - H * 0.38 + 4, 'rgba(138,138,154,1)', 11);
+    label(ctx2, 'compressione', cx + 10, cy - H * 0.2, 'rgba(138,138,154,1)', 9);
+    label(ctx2, 'trazione', cx + 10, cy + H * 0.2, 'rgba(138,138,154,1)', 9);
+
+    // dominio tracciato progressivamente
+    const cycle = 12;
+    const lp = lt % cycle;
+    const u = clamp01(lp / 5);
+    const n = 80;
+    const pts = [];
+    for (let i = 0; i <= n * u; i++) {
+      const a = -0.35 + (i / n) * (Math.PI + 0.7);
+      const d = domainNM(Math.min(Math.max(a, 0), Math.PI));
+      const x = cx + d.M * xs * Math.sign(a > Math.PI / 2 ? 1 : 1);
+      const y = cy - d.N * ys;
+      pts.push([x, y, a]);
+    }
+    // chiusura specchiata
+    if (u > 0.55) {
+      const p2 = clamp01((u - 0.55) / 0.45);
+      const mir = [];
+      for (let i = 0; i <= n * p2; i++) {
+        const a = Math.PI - (i / n) * Math.PI;
+        const d = domainNM(a);
+        mir.push([cx - d.M * xs, cy - d.N * ys]);
+      }
+      if (mir.length > 1) {
+        ctx2.strokeStyle = 'rgba(0,212,170,0.8)'; ctx2.lineWidth = 2;
+        ctx2.beginPath(); ctx2.moveTo(mir[0][0], mir[0][1]);
+        for (let i = 1; i < mir.length; i++) ctx2.lineTo(mir[i][0], mir[i][1]);
+        ctx2.stroke();
+      }
+    }
+    if (pts.length > 1) {
+      ctx2.strokeStyle = '#00d4aa'; ctx2.lineWidth = 2.4;
+      ctx2.beginPath(); ctx2.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx2.lineTo(pts[i][0], pts[i][1]);
+      ctx2.stroke();
+    }
+    // punto di carico che orbita dentro/fuori
+    const wob = 0.5 + 0.5 * Math.sin(gt * 0.7);
+    const na = 0.35 + 0.5 * wob;
+    const d = domainNM(na * Math.PI);
+    const inside = (na > 0.12 && na < 0.88);
+    const px = cx + d.M * xs * 0.72 * (1 + 0.12 * Math.sin(gt * 1.1));
+    const py = cy - d.N * ys * 0.72 * (1 + 0.1 * Math.cos(gt * 0.9));
+    ctx2.fillStyle = inside ? '#00d4aa' : '#eb342a';
+    ctx2.shadowColor = ctx2.fillStyle; ctx2.shadowBlur = 14;
+    ctx2.beginPath(); ctx2.arc(px, py, 6, 0, Math.PI * 2); ctx2.fill();
+    ctx2.shadowBlur = 0;
+    label(ctx2, inside ? 'Punto assorbito ✓' : 'Punto esterno ✗', px + 12, py - 8, inside ? '#00d4aa' : '#eb342a', 11);
+    label(ctx2, 'dominio N-M · SLU', cx - W * 0.28, H * 0.1, '#00d4aa', 13);
+    label(ctx2, 'legge di progetto · diagramma limite EC2', cx - W * 0.28, H * 0.1 + 18, 'rgba(138,138,154,1)', 10);
+
+    // legenda Grenzdehnungen
+    const gx = W * 0.74, gy = H * 0.3;
+    label(ctx2, 'GRENZDEHNUNGEN', gx, gy, '#00d4aa', 12);
+    const rows = ['εc ≤ εcu (−3.5‰)', 'εs ≤ εsu (25‰)', 'εpre trefoli OK'];
+    rows.forEach((t, i) => {
+      const ap = clamp01((lp - 1.5 - i * 0.5) / 0.6);
+      ctx2.globalAlpha = ap;
+      label(ctx2, '✓ ' + t, gx, gy + 24 + i * 22, 'rgba(240,240,245,0.9)', 10.5);
+      ctx2.globalAlpha = 1;
+    });
+
+    const ro = document.getElementById('ro3');
+    if (ro) ro.innerHTML = 'N = <b>' + (d.N * 0.72).toFixed(0) + '</b> kN · M = <b>' + (d.M * 0.72).toFixed(0) + '</b> kNm · ratio <b>' + (inside ? '0.83 ✓' : '1.12 ✗') + '</b>';
+  }
+
+  /* ============================================================
+     NLS — TERMINALI DEMO
+     ============================================================ */
+  const SITE_TERMINAL = [
+    { type: 'input', text: 'git clone https://github.com/DomenicoGaudioso/SectionTool' },
+    { type: 'output', text: '✓ strutturanl/ · analisi · materiali · sezioni · grafici' },
+    { type: 'input', text: 'python -m streamlit run strutturanl/ui/app.py' },
+    { type: 'output', text: '✓ esempio caricato: rettangolo 400×600 · 4Ø28' },
+    { type: 'input', text: 'nls leggi --cls C30/37 EC2 medi --acciaio B500B' },
+    { type: 'output', text: '✓ Parabel-Rechteck · eps.c1 -1.75‰ · eps.cu -3.5‰' },
+    { type: 'output', text: '✓ B500B con incrudimento · eps.y 2.17‰' },
+    { type: 'input', text: 'nls curva --tipo m-kappa --n 0' },
+    { type: 'output', text: '✓ fessurazione + tension stiffening (Mitwirkung)' },
+    { type: 'output-accent', text: '  └─ Mu = 412 kNm · χu = 48.2‰ · μ = 7.1  ✓' },
+    { type: 'input', text: 'nls dominio --biassiale --punto "N=800,My=220,Mz=40"' },
+    { type: 'output', text: '✓ superficie N-Mx-My · 38 angoli' },
+    { type: 'output-accent', text: '  └─ verifica: assorbito (0.83)  ✓' },
+  ];
+  async function runTerm1() {
+    await typeInto(document.getElementById('t1cmd'), 'nls sezione --esempio rettangolo-400x600', 42);
+    await sleep(500); showOut('t1out1');
+    await sleep(1200); showOut('t1out2');
+    await sleep(1400); showOut('t1out3');
+  }
+  async function runTerm2() {
+    await typeInto(document.getElementById('t2cmd'), 'nls curva m-kappa --n 0 --viscosita 2.0', 42);
+    await sleep(500); showOut('t2out1');
+    await sleep(1300); showOut('t2out2');
+    await sleep(1500); showOut('t2out3');
+  }
+  async function runTerm3() {
+    await typeInto(document.getElementById('t3cmd'), 'nls dominio nm --biassiale --verifica', 42);
+    await sleep(500); showOut('t3out1');
+    await sleep(1300); showOut('t3out2');
+    await sleep(1400); showOut('t3out3');
+  }
+  const SITE_RUN = { demo1: runTerm1, demo2: runTerm2, demo3: runTerm3 };
+  const SITE_Tm = 30;
+
+  /* ---- 3D builders ---- */
+  function buildSection3D(scene, state) {
+    const g = new THREE.Group();
+    // sezione estrusa 400×600
+    const shape = new THREE.Shape();
+    shape.moveTo(-2, -3); shape.lineTo(2, -3); shape.lineTo(2, 3); shape.lineTo(-2, 3); shape.lineTo(-2, -3);
+    const ext = new THREE.ExtrudeGeometry(shape, { depth: 10, bevelEnabled: false });
+    ext.translate(0, 0, -5);
+    const mesh = new THREE.Mesh(ext, new THREE.MeshPhongMaterial({ color: 0x6b6f7a, transparent: true, opacity: 0.55 }));
+    g.add(mesh);
+    // barre
+    for (const bx of [-1.3, 1.3]) for (const by of [-2.1, 2.1]) {
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 10, 12), new THREE.MeshPhongMaterial({ color: 0xf2c82c }));
+      bar.rotation.x = Math.PI / 2; bar.position.set(bx, by, 0); g.add(bar);
+    }
+    // piano deformante (piano semi-trasparente inclinato)
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(7, 8), new THREE.MeshPhongMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.18, side: THREE.DoubleSide }));
+    plane.position.set(3.2, 0, 0); plane.rotation.y = Math.PI / 2;
+    g.add(plane);
+    scene.add(g);
+    state.update = (t) => { plane.rotation.z = 0.25 * Math.sin(t * 0.8); plane.rotation.x = 0.2 * Math.sin(t * 0.55); };
+  }
+  function buildMk3D(scene, state) {
+    // nastro della curva M-χ nello spazio (χ, M, N-costante)
+    const g = new THREE.Group();
+    const pts = [];
+    for (let i = 0; i <= 60; i++) {
+      const p = mkCurvePoint(i / 60);
+      pts.push(new THREE.Vector3((p.chi - 15) * 0.32, (p.M - 200) * 0.03, 0));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.1, 8, false), new THREE.MeshPhongMaterial({ color: 0x00d4aa }));
+    g.add(tube);
+    // assi
+    const ax = new THREE.Mesh(new THREE.BoxGeometry(12, 0.05, 0.05), new THREE.MeshPhongMaterial({ color: 0x8a8a9a }));
+    ax.position.set(0, -6.5, 0); g.add(ax);
+    const ay = new THREE.Mesh(new THREE.BoxGeometry(0.05, 10, 0.05), new THREE.MeshPhongMaterial({ color: 0x8a8a9a }));
+    ay.position.set(-6.5, 0, 0); g.add(ay);
+    scene.add(g);
+  }
+  function buildDomain3D(scene, state) {
+    // superficie N-Mx-My (gomito di pressoflessione deviata) a wireframe
+    const g = new THREE.Group();
+    const mat = new THREE.LineBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.75 });
+    const nA = 36, nT = 18;
+    for (let i = 0; i < nA; i++) {
+      const a = (i / nA) * Math.PI * 2;
+      const pts = [];
+      for (let j = 0; j <= nT; j++) {
+        const t = (j / nT) * Math.PI / 2;
+        const d = domainNM(t);
+        const M = d.M * 0.02, N = (d.N - 1200) * 0.004;
+        pts.push(new THREE.Vector3(M * Math.cos(a), N, M * Math.sin(a)));
+      }
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+    }
+    for (let j = 0; j <= nT; j += 2) {
+      const t = (j / nT) * Math.PI / 2;
+      const d = domainNM(t);
+      const M = d.M * 0.02, N = (d.N - 1200) * 0.004;
+      const pts = [];
+      for (let i = 0; i <= nA; i++) {
+        const a = (i / nA) * Math.PI * 2;
+        pts.push(new THREE.Vector3(M * Math.cos(a), N, M * Math.sin(a)));
+      }
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+    }
+    scene.add(g);
+  }
+
+  const SITE_STAGES = [
+    { cvId: 'stage1', glId: 'gl1', draw: drawSectionStage, speed2: 1, vwId: 'vw1', tcId: 'tc1', build: buildSection3D, cam: { r: 16, h: 7, ty: 0, sp: 0.12 }, vw2d: 'VISTA 2D · SEZIONE', fadeAt: 16 },
+    { cvId: 'stage2', glId: 'gl2', draw: drawMkStage, speed2: 1, vwId: 'vw2', tcId: 'tc2', build: buildMk3D, cam: { r: 18, h: 8, ty: 0, sp: 0.11 }, vw2d: 'VISTA 2D · ANALISI', fadeAt: 17 },
+    { cvId: 'stage3', glId: 'gl3', draw: drawDomainStage, speed2: 1, vwId: 'vw3', tcId: 'tc3', build: buildDomain3D, cam: { r: 14, h: 7, ty: 0, sp: 0.14 }, vw2d: 'VISTA 2D · DOMINIO', fadeAt: 18 }
+  ];
+
+  // hero law tags
+  (function heroTags() {
+    const wrap = document.getElementById('heroLaws');
+    if (!wrap) return;
+    NLS_LAWS.forEach((p, i) => {
+      const s = document.createElement('span');
+      s.className = 'law-tag' + (i === 0 ? ' on' : '');
+      s.textContent = p.key;
+      wrap.appendChild(s);
+    });
+    let k = 0;
+    setInterval(() => {
+      k = (k + 1) % NLS_LAWS.length;
+      [...wrap.children].forEach((el, i) => el.classList.toggle('on', i === k));
+    }, 2600);
+  })();
+
+  /* ============================================================
+     MANAGER 2D+3D
+     ============================================================ */
+  const stages = SITE_STAGES;
+  stages.forEach(s => {
+    s.cv = document.getElementById(s.cvId);
+    s.ctx = s.cv.getContext('2d');
+    s.dpr = Math.min(2, window.devicePixelRatio || 1);
+    s.st = { t0: null, visible: false, hud: 0, mode: '2d' };
+    s.gl = null; s.glTried = false;
+    new IntersectionObserver(es => es.forEach(e => s.st.visible = e.isIntersecting), { threshold: 0.03 }).observe(s.cv);
+  });
+  const Tm = SITE_Tm || 26;
+  const gT0 = performance.now();
+  (function loop(now) {
+    const t = ((now || performance.now()) - gT0) / 1000;
+    for (const s of stages) {
+      if (!s.st.visible) continue;
+      try {
+        if (s.st.t0 === null) s.st.t0 = t;
+        let local = t - s.st.t0;
+        if (local >= Tm) { s.st.t0 += Tm * Math.floor(local / Tm); local = t - s.st.t0; }
+        let o2 = 1, o3 = 0;
+        if (local < 0.9) o2 = local / 0.9;
+        if (local > (s.fadeAt || 12) && local <= ((s.fadeAt || 12) + 1.2)) { const f = (local - (s.fadeAt || 12)) / 1.2; o2 = 1 - f; o3 = f; }
+        else if (local > ((s.fadeAt || 12) + 1.2)) { o2 = 0; o3 = 1; }
+        s.cv.style.opacity = o2.toFixed(2);
+        if (o2 > 0.02) {
+          const cw = s.cv.clientWidth, ch = s.cv.clientHeight;
+          if (cw && ch) {
+            const bw = Math.round(cw * s.dpr), bh = Math.round(ch * s.dpr);
+            if (s.cv.width !== bw || s.cv.height !== bh) { s.cv.width = bw; s.cv.height = bh; }
+            s.ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+            s.draw(s.ctx, cw, ch, local * s.speed2, t, s.st);
+          }
+        }
+        if (!s.gl && !s.glTried && o3 > 0.01) { s.glTried = true; s.gl = createGL(s); }
+        if (s.gl) {
+          s.gl.canvas.style.opacity = o3.toFixed(2);
+          if (o3 > 0.02) s.gl.render(t);
+        }
+        const mode = o3 > 0.5 ? '3d' : '2d';
+        if (mode !== s.st.mode) {
+          s.st.mode = mode;
+          const el = document.getElementById(s.vwId);
+          if (el) el.textContent = mode === '3d' ? 'VISTA 3D · ORBIT' : (s.vw2d || 'VISTA 2D · ANALISI');
+        }
+        const tcEl = document.getElementById(s.tcId);
+        if (tcEl) tcEl.textContent = timecode(local);
+      } catch (e) { /* continua */ }
+    }
+    requestAnimationFrame(loop);
+  })(performance.now());
+
+  function createGL(s) {
+    try {
+      const glCanvas = document.createElement('canvas');
+      glCanvas.className = 'gl-layer';
+      s.cv.parentNode.insertBefore(glCanvas, s.cv.nextSibling);
+      const renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 500);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+      const dir = new THREE.DirectionalLight(0xffffff, 0.7);
+      dir.position.set(30, 50, 20); scene.add(dir);
+      const grid = new THREE.GridHelper(120, 24, 0x00d4aa, 0x8a8a9a);
+      grid.material.opacity = 0.12; grid.material.transparent = true;
+      scene.add(grid);
+      const state = { update: () => {} };
+      s.build(scene, state);
+      const c = s.cam;
+      return {
+        canvas: glCanvas,
+        render(t) {
+          const w = s.cv.clientWidth, h = s.cv.clientHeight;
+          if (!w || !h) return;
+          if (glCanvas.width !== Math.round(w * renderer.getPixelRatio()) || glCanvas.height !== Math.round(h * renderer.getPixelRatio())) {
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h; camera.updateProjectionMatrix();
+          }
+          const a = t * (c.sp || 0.12);
+          camera.position.set(c.r * Math.cos(a), c.h + Math.sin(t * 0.4) * 1.6, c.r * Math.sin(a));
+          camera.lookAt(0, c.ty || 0, 0);
+          state.update(t);
+          renderer.render(scene, camera);
+        }
+      };
+    } catch (e) { return null; }
+  }
+
+  /* ============================================================
+     TYPING + REVEAL
+     ============================================================ */
+  async function typeInto(el, text, speed) {
+    el.textContent = '';
+    for (const ch of text) { el.textContent += ch; await sleep(speed); }
+  }
+  function showOut(id, txt) {
+    const el = document.getElementById(id);
+    if (txt) el.textContent = txt;
+    el.style.opacity = 1;
+  }
+  const termDone = { demo1: false, demo2: false, demo3: false };
+  const demoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelector('.demo-text').classList.add('in-view');
+        const fn = SITE_RUN[entry.target.id];
+        if (fn && !termDone[entry.target.id]) { termDone[entry.target.id] = true; fn(); }
+      }
+    });
+  }, { threshold: 0.35 });
+  document.querySelectorAll('.scroll-demo-section').forEach(sec => demoObserver.observe(sec));
+
+  /* avvio terminale hero (dopo che SITE_TERMINAL è definito) */
+  runTerminal(SITE_TERMINAL);
+
+</script>
 </body>
 </html>
