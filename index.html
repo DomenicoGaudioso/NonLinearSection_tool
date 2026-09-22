@@ -407,7 +407,7 @@
 <div class="docbar">
   <a href="../">← ing. Domenico Gaudioso</a>
   <span>NonLinearSection · analisi di sezioni</span>
-  <a href="https://github.com/DomenicoGaudioso/SectionTool">Repository sorgente →</a>
+  <a href="https://apps.civilbox.xyz/nonlinear-section">Apri l'app su CivilBox →</a>
 </div>
 
 <!-- HERO -->
@@ -657,32 +657,28 @@
 <section class="section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Installazione</h2>
-      <p class="section-subtitle">Una libreria Python pura con UI Streamlit opzionale — o la sezione dentro il tuo telaio non lineare.</p>
+      <h2 class="section-title">Come accedere</h2>
+      <p class="section-subtitle">L'app di analisi non lineare delle sezioni vive su CivilBox — e la sezione si integra nel tuo telaio non lineare.</p>
     </div>
     <div class="code-block">
       <div class="code-header">
         <button class="copy-btn" id="copyBtn">Copia</button>
-        <span class="code-label">bash</span>
+        <span class="code-label">app CivilBox</span>
       </div>
-      <pre class="code-content" id="codeContent"><span class="code-comment"># Clona SectionTool</span>
-<span class="code-command">git clone https://github.com/DomenicoGaudioso/SectionTool.git</span>
-<span class="code-command">cd SectionTool</span>
+      <pre class="code-content" id="codeContent"><span class="code-comment"># NonLinearSection — analisi non lineare di sezioni</span>
+<span class="code-command">https://apps.civilbox.xyz/nonlinear-section</span>
 
-<span class="code-comment"># Dipendenze: numpy, scipy + UI (streamlit, pandas, plotly)</span>
-<span class="code-command">pip install numpy scipy streamlit pandas plotly</span>
+<span class="code-comment"># Cosa trovi nell'app</span>
+<span class="code-comment"># · legami σ-ε non lineari EC2 / DIN 1045 (medi e progetto)</span>
+<span class="code-comment"># · sezioni multi-getto con fori, barre, trefoli</span>
+<span class="code-comment"># · curva M-χ e dominio N-M · superficie N-Mx-My</span>
+<span class="code-comment"># · import sezioni .inc · esempi del manuale inclusi</span>
 
-<span class="code-comment"># Avvia l'interfaccia sezioni (StrutturaNL — Querschnitte)</span>
-<span class="code-command">python -m streamlit run strutturanl/ui/app.py</span>
-
-<span class="code-comment"># Oppure usa il motore in Python</span>
-<span class="code-command">python -c "from strutturanl.analisi import AnalisiSezione; print('ok')"</span>
-
-<span class="code-comment"># Test di convalida (INCA2 · Stab2D-NL · Dalben)</span>
-<span class="code-command">python -m pytest tests</span></pre>
+<span class="code-comment"># Catalogo completo delle app</span>
+<span class="code-command">https://civilbox.xyz/tools</span></pre>
     </div>
     <p class="install-note">
-      ℹ️ L'app carica subito l'esempio del manuale (rettangolo 400×600 con 4Ø28) e importa le sezioni <code>.inc</code> di INCA2. <a href="https://github.com/DomenicoGaudioso/SectionTool">Documentazione e sorgenti su GitHub</a>.
+      ℹ️ L'app carica subito l'esempio del manuale (rettangolo 400×600 con 4Ø28) e importa le sezioni <code>.inc</code> di INCA2. <a href="https://civilbox.xyz/tools">Tutte le app su CivilBox</a>.
     </p>
   </div>
 </section>
@@ -696,8 +692,8 @@
         <h2 class="cta-title">La tua sezione, senza linearizzazioni</h2>
         <p class="cta-subtitle">Legami reali, equilibrio esatto del piano deformante, curve e domini che parlano la lingua del progetto.</p>
         <div class="cta-buttons">
-          <a href="https://github.com/DomenicoGaudioso/SectionTool" class="btn btn-primary" target="_blank" rel="noopener noreferrer">⭐ Vai su GitHub</a>
-          <a href="https://github.com/DomenicoGaudioso/SectionTool/tree/main/strutturanl" class="btn btn-secondary">🐍 Esplora il motore</a>
+          <a href="https://apps.civilbox.xyz/nonlinear-section" class="btn btn-primary" target="_blank" rel="noopener noreferrer">⛏️ Apri l'app su CivilBox</a>
+          <a href="https://civilbox.xyz/tools" class="btn btn-secondary">🧰 Tutte le app</a>
         </div>
       </div>
     </div>
@@ -705,7 +701,7 @@
 </section>
 
 <footer class="footer">
-  NonLinearSection · SectionTool — creato da <a href="https://github.com/DomenicoGaudioso/SectionTool" target="_blank" rel="noopener noreferrer">Domenico Gaudioso</a> · Parte di <a href="https://civilbox.xyz" target="_blank" rel="noopener noreferrer">civilbox.xyz</a> · <a href="mailto:info@civilbox.xyz">Contattaci</a> · <a href="../">← Sito personale</a>
+  NonLinearSection — creato da <a href="https://civilbox.xyz" target="_blank" rel="noopener noreferrer">Domenico Gaudioso</a> · Parte di <a href="https://civilbox.xyz" target="_blank" rel="noopener noreferrer">civilbox.xyz</a> · <a href="mailto:info@civilbox.xyz">Contattaci</a> · <a href="../">← Sito personale</a>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -943,6 +939,116 @@
     ctx2.textAlign = 'left';
   }
 
+  /* ============ pannelli "figura plotly" (stile plot delle repo) ============
+     Palette dai sorgenti:
+     - CompositeSectionCheck SGMPy_section_v01._plot_style:
+       acciaio #1f77b4 · calcestruzzo #111111 · armatura #f28e2b · decurtata #d62728
+     - strutturanl/grafici/base.py:
+       getto #c8ccd2 · contorno #4d4d4d · barre #8b1a1a · trefoli #1f4e79
+       baricentro #cc0000 · dentro #1a7a3a · fuori #c0392b
+     Tensioni SGMPy_check.tension: linea default plotly + fill, barre 'orange'.
+  */
+  const PLOT = {
+    steel: '#1f77b4', concrete: '#111111', bar: '#f28e2b', removed: '#d62728',
+    getto: '#c8ccd2', contorno: '#4d4d4d', barre: '#8b1a1a', trefoli: '#1f4e79',
+    baricentro: '#cc0000', dentro: '#1a7a3a', fuori: '#c0392b',
+    curve: '#636efa', grid: '#eef0f3', axis: '#444444', titlec: '#4d4d4d', annc: '#666666'
+  };
+  function roundRectPath(ctx2, x, y, w, h, r) {
+    ctx2.beginPath();
+    ctx2.moveTo(x + r, y);
+    ctx2.arcTo(x + w, y, x + w, y + h, r);
+    ctx2.arcTo(x + w, y + h, x, y + h, r);
+    ctx2.arcTo(x, y + h, x, y, r);
+    ctx2.arcTo(x, y, x + w, y, r);
+    ctx2.closePath();
+  }
+  function figPanel(ctx2, x, y, w, h, title) {
+    ctx2.save();
+    ctx2.fillStyle = '#ffffff';
+    ctx2.strokeStyle = '#dcdcdc';
+    ctx2.lineWidth = 1;
+    roundRectPath(ctx2, x, y, w, h, 8);
+    ctx2.fill(); ctx2.stroke();
+    if (title) {
+      ctx2.font = '600 13px -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+      ctx2.fillStyle = PLOT.titlec;
+      ctx2.textAlign = 'center';
+      ctx2.fillText(title, x + w / 2, y + 24);
+      ctx2.textAlign = 'left';
+    }
+    ctx2.restore();
+    // box interno del plot (margini stile plotly)
+    return { x: x + 58, y: y + 42, w: w - 78, h: h - 92, full: { x, y, w, h } };
+  }
+  function figAxes(ctx2, b, xlabel, ylabel, opts) {
+    opts = opts || {};
+    ctx2.save();
+    ctx2.font = '10px -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+    // griglia
+    ctx2.strokeStyle = PLOT.grid; ctx2.lineWidth = 1;
+    const nx = opts.nx || 5, ny = opts.ny || 5;
+    for (let i = 1; i < nx; i++) {
+      const x = b.x + b.w * i / nx;
+      ctx2.beginPath(); ctx2.moveTo(x, b.y); ctx2.lineTo(x, b.y + b.h); ctx2.stroke();
+    }
+    for (let i = 1; i < ny; i++) {
+      const y = b.y + b.h * i / ny;
+      ctx2.beginPath(); ctx2.moveTo(b.x, y); ctx2.lineTo(b.x + b.w, y); ctx2.stroke();
+    }
+    // assi
+    ctx2.strokeStyle = PLOT.axis; ctx2.lineWidth = 1.2;
+    ctx2.beginPath(); ctx2.moveTo(b.x, b.y); ctx2.lineTo(b.x, b.y + b.h); ctx2.lineTo(b.x + b.w, b.y + b.h); ctx2.stroke();
+    ctx2.fillStyle = PLOT.annc;
+    if (xlabel) {
+      ctx2.textAlign = 'center';
+      ctx2.fillText(xlabel, b.x + b.w / 2, b.y + b.h + 30);
+      ctx2.textAlign = 'left';
+    }
+    if (ylabel) {
+      ctx2.save();
+      ctx2.translate(b.x - 40, b.y + b.h / 2);
+      ctx2.rotate(-Math.PI / 2);
+      ctx2.textAlign = 'center';
+      ctx2.fillText(ylabel, 0, 0);
+      ctx2.restore();
+      ctx2.textAlign = 'left';
+    }
+    ctx2.restore();
+  }
+  function figLegend(ctx2, x, y, items) {
+    // legenda verticale stile plotly in alto a destra
+    ctx2.save();
+    ctx2.font = '10.5px -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+    let yy = y;
+    for (const [col, txt] of items) {
+      ctx2.strokeStyle = col; ctx2.lineWidth = 2.2;
+      ctx2.beginPath(); ctx2.moveTo(x, yy); ctx2.lineTo(x + 20, yy); ctx2.stroke();
+      ctx2.fillStyle = '#444';
+      ctx2.fillText(txt, x + 26, yy + 3.5);
+      yy += 18;
+    }
+    ctx2.restore();
+  }
+  function studShape(ctx2, cx, yFlangeTop, scale, up) {
+    // Piolo Nelson (EN 1994-2): gambo Ød con testa, h_sc totale.
+    // Default app: d_piolo 16, hsc 150 (h/d = 9.4). Disegnato sezionato:
+    // gambo come rettangolo d, testa come rettangolo ~2d.
+    const d = 16 * scale, hsc = 150 * scale, dHead = 32 * scale, hHead = 9 * scale;
+    const dir = up ? -1 : 1;
+    ctx2.save();
+    ctx2.strokeStyle = PLOT.steel; ctx2.lineWidth = 1.6;
+    ctx2.fillStyle = 'rgba(31,119,180,0.10)';
+    // gambo
+    const y0 = yFlangeTop, y1 = yFlangeTop + dir * hsc;
+    ctx2.fillRect(cx - d / 2, Math.min(y0, y1), d, hsc);
+    ctx2.strokeRect(cx - d / 2, Math.min(y0, y1), d, hsc);
+    // testa in cima (nel cls)
+    ctx2.fillRect(cx - dHead / 2, Math.min(y1 - dir * hHead, y1), dHead, hHead);
+    ctx2.strokeRect(cx - dHead / 2, Math.min(y1 - dir * hHead, y1), dHead, hHead);
+    ctx2.restore();
+  }
+
   /* ============================================================
      NLS — STAGE 1 · SEZIONE + LEGAMI σ-ε
      ============================================================ */
@@ -1022,14 +1128,15 @@
   }
   function drawRectSection(ctx2, cx, cy, w, h, strainK, strainE0, prog) {
     // sezione rettangolare + 4 barre, con piano deformante sovrapposto
-    ctx2.fillStyle = '#6b6f7a';
+    ctx2.fillStyle = PLOT.getto;            // '#c8ccd2' COLORE_GETTO
     ctx2.fillRect(cx - w / 2, cy - h / 2, w, h);
-    hatch(ctx2, cx - w / 2, cy - h / 2, w, h, 10, 'rgba(240,240,245,0.22)');
-    ctx2.strokeStyle = 'rgba(0,212,170,0.85)'; ctx2.lineWidth = 1.6;
+    hatch(ctx2, cx - w / 2, cy - h / 2, w, h, 10, 'rgba(77,77,77,0.35)');
+    ctx2.strokeStyle = PLOT.contorno;       // '#4d4d4d' COLORE_CONTORNO
+    ctx2.lineWidth = 1.4;
     ctx2.strokeRect(cx - w / 2, cy - h / 2, w, h);
-    // barre 4Ø28 (2+2)
+    // barre 4Ø28 (2+2) — cerchi r = sqrt(A/π) come in _disegna_geometria
     const r = 5;
-    ctx2.fillStyle = '#f2c82c';
+    ctx2.fillStyle = PLOT.barre;            // '#8b1a1a' COLORE_BARRE
     const barX = [cx - w * 0.3, cx + w * 0.3];
     const barY = [cy - h * 0.36, cy + h * 0.36];
     for (const bx of barX) for (const by of barY) {
@@ -1255,9 +1362,9 @@
      NLS — TERMINALI DEMO
      ============================================================ */
   const SITE_TERMINAL = [
-    { type: 'input', text: 'git clone https://github.com/DomenicoGaudioso/SectionTool' },
-    { type: 'output', text: '✓ strutturanl/ · analisi · materiali · sezioni · grafici' },
-    { type: 'input', text: 'python -m streamlit run strutturanl/ui/app.py' },
+    { type: 'input', text: 'apps.civilbox.xyz/nonlinear-section' },
+    { type: 'output', text: '✓ app CivilBox · motore strutturanl · sezioni' },
+    { type: 'input', text: 'nls esempio --manuale rettangolo-400x600' },
     { type: 'output', text: '✓ esempio caricato: rettangolo 400×600 · 4Ø28' },
     { type: 'input', text: 'nls leggi --cls C30/37 EC2 medi --acciaio B500B' },
     { type: 'output', text: '✓ Parabel-Rechteck · eps.c1 -1.75‰ · eps.cu -3.5‰' },
