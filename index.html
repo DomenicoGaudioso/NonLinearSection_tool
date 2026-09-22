@@ -458,7 +458,7 @@
         <span class="demo-label reveal-up d1">CASE STUDY 01 · SEZIONE & MATERIALI</span>
         <h2 class="demo-title reveal-up d2">Geometria Arbitraria, Legami Veri</h2>
         <p class="demo-desc reveal-up d3">
-          Poligoni con fori, cerchi e anelli, gruppi di barre, trefoli di precompressione, getti successivi. Su ogni fibra agisce la legge σ-ε del suo materiale: parabola-rettangolo EC2/DIN, acciaio elastoplastico con incrudimento, tension stiffening della zona tesa.
+          Poligoni con fori, alveoli e celle, gruppi di barre, trefoli di precompressione, getti successivi. Dal cassone da ponte alla lastra alveolare: su ogni fibra agisce la legge σ-ε del suo materiale — parabola-rettangolo EC2/DIN, acciaio elastoplastico con incrudimento, tension stiffening della zona tesa.
         </p>
       </div>
       <div class="demo-terminal reveal-up d3">
@@ -678,7 +678,7 @@
 <span class="code-command">https://civilbox.xyz/tools</span></pre>
     </div>
     <p class="install-note">
-      ℹ️ L'app carica subito un esempio pronto (rettangolo 400×600 con 4Ø28) e importa le sezioni da file. <a href="https://civilbox.xyz/tools">Tutte le app su CivilBox</a>.
+      ℹ️ L'app carica subito un esempio pronto (cassone da ponte, lastra alveolare, travi precompresse) e importa le sezioni da file. <a href="https://civilbox.xyz/tools">Tutte le app su CivilBox</a>.
     </p>
   </div>
 </section>
@@ -1166,28 +1166,167 @@
     ctx2.beginPath(); ctx2.moveTo(px + dyTop, cy - h / 2); ctx2.lineTo(px + dyBot, cy + h / 2); ctx2.stroke();
     label(ctx2, 'ε(y) = ε₀ + κ·y', px - 30, cy - h / 2 - 18, 'rgba(0,212,170,0.9)', 9);
   }
+  /* ---- sezioni complesse dagli esempi della repo (geometrie reali) ---- */
+  const NLS_SEZIONI = [
+    {
+      key: 'CASSONE DA PONTE',
+      note: 'cella chiusa · precompressione · luce 50 m',
+      est: [[-4700,2669],[-4725,2694],[-4765,2694],[-4765,2856],[-4790,2882],[-4990,2890],[-5015,2866],[-5015,2770],[-4895,2240],[-4770,2240],[-4630,2306],[-2619,2188],[-2421,2122],[-2303,2000],[-2253,1878],[-1831,49],[-1770,0],[1770,0],[1831,49],[2253,1878],[2303,2000],[2421,2122],[2619,2188],[4630,2306],[4770,2240],[4895,2240],[5015,2770],[5015,2866],[4990,2890],[4790,2882],[4765,2856],[4765,2694],[4725,2694],[4700,2669],[4700,2489],[0,2395],[-4700,2489]],
+      fori: [[[-1632,2190],[1632,2190],[1890,2080],[1959,2000],[1960,1942],[1577,280],[1377,180],[-1377,180],[-1577,280],[-1960,1942],[-1959,2000],[-1890,2080]]],
+      barre: [[1550,90,14],[1450,90,14],[1350,90,14],[1250,90,14],[1150,90,14],[1050,90,14],[950,90,14],[-1550,90,14],[-1450,90,14],[-1350,90,14],[-1250,90,14],[-1150,90,14],[-1050,90,14],[-950,90,14]],
+      trefoli: [[1695,160,23],[1760,420,23],[1820,660,23],[-1820,660,23],[-1760,420,23],[-1695,160,23]]
+    },
+    {
+      key: 'LASTRA ALVEOLARE',
+      note: 'quattro alveoli · precompressione',
+      est: [[582,-200],[594,-180],[600,-160],[580,-140],[580,120],[570,130],[570,150],[580,160],[580,190],[570,200],[-570,200],[-580,190],[-580,160],[-570,150],[-570,130],[-580,120],[-580,-140],[-600,-160],[-594,-180],[-582,-200]],
+      fori: [
+        [[245,-85],[238,-100],[178,-160],[138,-160],[98,-160],[38,-100],[30,-85],[30,95],[48,120],[78,140],[128,150],[138,150],[148,150],[198,140],[228,120],[245,95]],
+        [[520,-85],[512,-100],[452,-160],[412,-160],[372,-160],[312,-100],[305,-85],[305,95],[322,120],[352,140],[402,150],[412,150],[422,150],[472,140],[502,120],[520,95]],
+        [[-245,95],[-228,120],[-198,140],[-148,150],[-138,150],[-128,150],[-78,140],[-48,120],[-30,95],[-30,-85],[-38,-100],[-98,-160],[-137,-160],[-178,-160],[-238,-100],[-245,-85]],
+        [[-520,95],[-502,120],[-472,140],[-422,150],[-412,150],[-402,150],[-352,140],[-322,120],[-305,95],[-305,-85],[-312,-100],[-372,-160],[-412,-160],[-452,-160],[-512,-100],[-520,-85]]
+      ],
+      barre: [],
+      trefoli: [[20,-165,6.3],[295,-165,6.3],[530,-165,6.3],[-255,-165,6.3],[-530,-165,6.3],[255,-165,6.3],[-20,-165,6.3],[-295,-165,6.3],[275,165,4.7],[-275,165,4.7]]
+    },
+    {
+      key: 'TRAVE A T PRECOMPRESSA',
+      note: 'mensole · trefoli nel bulbo inferiore',
+      est: [[-500,400],[-500,275],[-75,250],[-75,-300],[-175,-400],[-175,-500],[175,-500],[175,-400],[75,-300],[75,250],[500,275],[500,400]],
+      fori: [],
+      barre: [[450,350,6],[375,350,6],[300,350,6],[225,350,6],[150,350,6],[75,350,6],[0,350,6],[-75,350,6],[-150,350,6],[-225,350,6],[-300,350,6],[-375,350,6],[-450,350,6],[140,-410,12.5],[140,-460,12.5],[80,-410,12.5],[80,-460,12.5],[-80,-410,12.5],[-80,-460,12.5],[-140,-410,12.5],[-140,-460,12.5]],
+      trefoli: [[17,-270,10],[-17,-270,10],[0,-280,10],[0,-260,10],[17,-410,10],[-17,-410,10],[0,-420,10],[0,-400,10]]
+    },
+    {
+      key: 'DOPPIO T PRECOMPRESSO',
+      note: 'trave prefabbricata · 10 trefoli',
+      est: [[150,50],[200,200],[70,250],[70,720],[275,820],[275,970],[-275,970],[-275,820],[-70,720],[-70,250],[-200,200],[-150,50]],
+      fori: [],
+      barre: [[50,740,5],[-50,740,5],[250,945,5],[-250,945,5],[125,75,5],[-125,75,5],[45,75,5],[-45,75,5],[175,190,5],[-175,190,5]],
+      trefoli: [[200,910,8],[100,910,8],[0,910,8],[-100,910,8],[-200,910,8],[150,845,8],[30,845,8],[-30,845,8],[-150,845,8],[0,770,8]]
+    }
+  ];
+  function drawPolyPath(ctx2, f, pts) {
+    ctx2.beginPath();
+    ctx2.moveTo(f.px(pts[0][0]), f.py(pts[0][1]));
+    for (let i = 1; i < pts.length; i++) ctx2.lineTo(f.px(pts[i][0]), f.py(pts[i][1]));
+    ctx2.closePath();
+  }
+  function drawComplexSection(ctx2, box, sez, prog) {
+    // fit del bbox nel box (le coordinate y dei dati sono verso l'alto)
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of [sez.est, ...(sez.fori || [])]) for (const q of p) {
+      x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]);
+      y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]);
+    }
+    const s = Math.min(box.w / (x1 - x0), box.h / (y1 - y0)) * 0.94;
+    const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    const f = { s, px: (x) => cx + (x - mx) * s, py: (y) => cy - (y - my) * s };
+    // contorno pieno (getto) + fori vuoti
+    drawPolyPath(ctx2, f, sez.est);
+    ctx2.fillStyle = PLOT.getto;             // '#c8ccd2'
+    ctx2.fill();
+    for (const fo of (sez.fori || [])) {
+      drawPolyPath(ctx2, f, fo);
+      ctx2.fillStyle = '#ffffff';
+      ctx2.fill();
+      ctx2.strokeStyle = PLOT.contorno; ctx2.lineWidth = 1.1;
+      ctx2.stroke();
+    }
+    drawPolyPath(ctx2, f, sez.est);
+    ctx2.strokeStyle = PLOT.contorno; ctx2.lineWidth = 1.6;
+    if (prog < 1) strokeDrawOn(ctx2, sez.est.map(p => [f.px(p[0]), f.py(p[1])]), prog);
+    else ctx2.stroke();
+    // barre: cerchi pieni (r = sqrt(A/pi)) — trefoli: cerchi vuoti
+    const ap = clamp01((prog - 0.4) / 0.6);
+    ctx2.globalAlpha = ap;
+    for (const [x, y, r] of (sez.barre || [])) {
+      ctx2.beginPath(); ctx2.arc(f.px(x), f.py(y), Math.max(r * s, 1.6), 0, Math.PI * 2);
+      ctx2.fillStyle = PLOT.barre; ctx2.fill();
+      ctx2.strokeStyle = '#000'; ctx2.lineWidth = 0.5; ctx2.stroke();
+    }
+    for (const [x, y, r] of (sez.trefoli || [])) {
+      ctx2.beginPath(); ctx2.arc(f.px(x), f.py(y), Math.max(r * s, 1.6), 0, Math.PI * 2);
+      ctx2.fillStyle = 'none';
+      ctx2.strokeStyle = PLOT.trefoli; ctx2.lineWidth = 1.3; ctx2.stroke();
+    }
+    ctx2.globalAlpha = 1;
+    // baricentro
+    ctx2.strokeStyle = PLOT.baricentro; ctx2.lineWidth = 1.5;
+    ctx2.beginPath();
+    ctx2.moveTo(f.px(mx) - 7, f.py(my)); ctx2.lineTo(f.px(mx) + 7, f.py(my));
+    ctx2.moveTo(f.px(mx), f.py(my) - 7); ctx2.lineTo(f.px(mx), f.py(my) + 7);
+    ctx2.stroke();
+    return { f, x0, x1, y0, y1 };
+  }
+  function drawStrainPlane(ctx2, g, sez, strainK, strainE0) {
+    // piano deformante lungo l'altezza reale della sezione (y verso l'alto)
+    const px = g.box.x + g.box.w * 0.5, pyT = g.f.py(g.y1), pyB = g.f.py(g.y0);
+    ctx2.strokeStyle = 'rgba(138,138,154,0.6)'; ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(px, pyT - 10); ctx2.lineTo(px, pyB + 10); ctx2.stroke();
+    const sc = 2600;
+    // ε(y) = ε0 + κ·(y − y_mid) in mm/m
+    const yMid = (g.y0 + g.y1) / 2;
+    const eTop = strainE0 + strainK * (g.y1 - yMid) / 1000;
+    const eBot = strainE0 + strainK * (g.y0 - yMid) / 1000;
+    ctx2.beginPath();
+    ctx2.moveTo(px + eTop * sc, pyT);
+    ctx2.lineTo(px + eBot * sc, pyB);
+    ctx2.strokeStyle = PLOT.trefoli; ctx2.lineWidth = 2;
+    ctx2.stroke();
+    // asse neutro
+    if (Math.abs(eTop - eBot) > 1e-6) {
+      const t = eTop / (eTop - eBot);
+      const yn = pyT + t * (pyB - pyT);
+      ctx2.setLineDash([4, 3]);
+      ctx2.strokeStyle = PLOT.baricentro; ctx2.lineWidth = 1;
+      ctx2.beginPath(); ctx2.moveTo(px - 34, yn); ctx2.lineTo(px + 34, yn); ctx2.stroke();
+      ctx2.setLineDash([]);
+    }
+  }
   function drawSectionStage(ctx2, W, H, lt, gt, st) {
     ctx2.clearRect(0, 0, W, H);
     ctx2.strokeStyle = 'rgba(255,255,255,0.03)'; ctx2.lineWidth = 1;
     for (let x = 0; x < W; x += 42) { ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, H); ctx2.stroke(); }
     for (let y = 0; y < H; y += 42) { ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(W, y); ctx2.stroke(); }
 
-    const seg = 6.0;
-    const idx = Math.floor(lt / seg) % NLS_LAWS.length;
-    const law = NLS_LAWS[idx];
-    const fp = clamp01((lt % seg) / 2.0);
-    // curvature animata
-    const k = 2.2 * ease(clamp01((lt % seg) / 4)) * (idx === 1 ? 1.5 : 1);
-    const e0 = -0.4 * Math.sin(gt * 0.35);
+    // ciclo sulle sezioni complesse (una per volta, con piano deformante)
+    const seg = 6.5;
+    const idx = Math.floor(lt / seg) % NLS_SEZIONI.length;
+    const sez = NLS_SEZIONI[idx];
+    const fp = clamp01((lt % seg) / 1.6);
+    const k = 1.9 * ease(clamp01((lt % seg) / 4.2)) * (idx === 0 ? 0.55 : 1);
+    const e0 = -0.5 * Math.sin(gt * 0.32);
 
-    drawRectSection(ctx2, W * 0.26, H * 0.5, Math.min(W * 0.16, 130), Math.min(H * 0.5, 240), k, e0, fp);
-    drawLawCurves(ctx2, W * 0.66, H * 0.55, W * 0.2, H * 0.26, fp);
+    // pannello sezione (sx) — geometria reale degli esempi della repo
+    const bSec = figPanel(ctx2, W * 0.03, H * 0.06, W * 0.55, H * 0.86, 'Sezione — ' + sez.key);
+    const g = drawComplexSection(ctx2, { x: bSec.x, y: bSec.y + 8, w: bSec.w - 40, h: bSec.h - 34 }, sez, fp);
+    g.box = bSec;
+    drawStrainPlane(ctx2, g, sez, k, e0);
+    ctx2.font = '10px ' + MONO; ctx2.fillStyle = PLOT.annc;
+    ctx2.fillText(sez.note, bSec.x + 4, bSec.y + bSec.h - 8);
+    // legenda come _disegna_geometria
+    figLegend(ctx2, bSec.x + bSec.w - 132, bSec.y + 6, [
+      [PLOT.getto, 'Calcestruzzo'],
+      [PLOT.barre, 'Barre'],
+      [PLOT.trefoli, 'Trefoli']
+    ]);
 
-    label(ctx2, law.key, W * 0.66, H * 0.16, '#00d4aa', 13);
-    label(ctx2, law.note, W * 0.66, H * 0.16 + 18, 'rgba(138,138,154,1)', 10);
+    // pannello leggi σ-ε (dx)
+    const bLaw = figPanel(ctx2, W * 0.61, H * 0.06, W * 0.36, H * 0.86, 'Legami σ-ε');
+    drawLawCurves(ctx2, bLaw.x + bLaw.w * 0.42, bLaw.y + bLaw.h * 0.62, bLaw.w * 0.3, bLaw.h * 0.3, fp);
+    const law = NLS_LAWS[idx % NLS_LAWS.length];
+    ctx2.font = '11px ' + MONO; ctx2.fillStyle = PLOT.titlec;
+    ctx2.fillText(law.key, bLaw.x + 4, bLaw.y + 24);
+    ctx2.font = '9.5px ' + MONO; ctx2.fillStyle = PLOT.annc;
+    ctx2.fillText(law.note, bLaw.x + 4, bLaw.y + 40);
+    // stato corrente
+    ctx2.fillText('ε₀ = ' + (e0).toFixed(2) + ' mm/m', bLaw.x + 4, bLaw.y + bLaw.h - 26);
+    ctx2.fillText('κ  = ' + k.toFixed(2) + ' mm/m/m', bLaw.x + 4, bLaw.y + bLaw.h - 12);
 
     const ro = document.getElementById('ro1');
-    if (ro) ro.innerHTML = '<b>' + law.key + '</b> · κ = <b>' + k.toFixed(2) + '</b> ‰';
+    if (ro) ro.innerHTML = '<b>' + sez.key + '</b> · κ = <b>' + k.toFixed(2) + '</b> ‰';
   }
 
   /* ============================================================
@@ -1364,8 +1503,10 @@
   const SITE_TERMINAL = [
     { type: 'input', text: 'apps.civilbox.xyz/nonlinear-section' },
     { type: 'output', text: '✓ app CivilBox · motore strutturanl · sezioni' },
-    { type: 'input', text: 'nls esempio rettangolo-400x600' },
-    { type: 'output', text: '✓ esempio caricato: rettangolo 400×600 · 4Ø28' },
+    { type: 'input', text: 'nls esempio --cassone da ponte' },
+    { type: 'output', text: '✓ cassone con cella · 6 trefoli · 14 barre' },
+    { type: 'input', text: 'nls esempio --lastra alveolare' },
+    { type: 'output', text: '✓ 4 alveoli · precompressione 10 cavi' },
     { type: 'input', text: 'nls leggi --cls C30/37 EC2 medi --acciaio B500B' },
     { type: 'output', text: '✓ Parabel-Rechteck · eps.c1 -1.75‰ · eps.cu -3.5‰' },
     { type: 'output', text: '✓ B500B con incrudimento · eps.y 2.17‰' },
@@ -1377,7 +1518,7 @@
     { type: 'output-accent', text: '  └─ verifica: assorbito (0.83)  ✓' },
   ];
   async function runTerm1() {
-    await typeInto(document.getElementById('t1cmd'), 'nls sezione --esempio rettangolo-400x600', 42);
+    await typeInto(document.getElementById('t1cmd'), 'nls sezione --geometria complessa', 42);
     await sleep(500); showOut('t1out1');
     await sleep(1200); showOut('t1out2');
     await sleep(1400); showOut('t1out3');
@@ -1477,7 +1618,7 @@
   (function heroTags() {
     const wrap = document.getElementById('heroLaws');
     if (!wrap) return;
-    NLS_LAWS.forEach((p, i) => {
+    NLS_SEZIONI.forEach((p, i) => {
       const s = document.createElement('span');
       s.className = 'law-tag' + (i === 0 ? ' on' : '');
       s.textContent = p.key;
@@ -1485,7 +1626,7 @@
     });
     let k = 0;
     setInterval(() => {
-      k = (k + 1) % NLS_LAWS.length;
+      k = (k + 1) % NLS_SEZIONI.length;
       [...wrap.children].forEach((el, i) => el.classList.toggle('on', i === k));
     }, 2600);
   })();
