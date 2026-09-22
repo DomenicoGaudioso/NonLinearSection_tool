@@ -1,770 +1,450 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CompositeSectionCheck — Sezioni composte acciaio-calcestruzzo</title>
-<meta name="description" content="Analisi elastica di sezioni composte acciaio-calcestruzzo con metodo della sezione trasformata. NTC2018 · EN 1994-1-1">
-<style>
-  :root {
-    --bg: #ffffff;
-    --surface: #f7f8fa;
-    --surface-2: #eef0f3;
-    --text: #0a0a0f;
-    --text-secondary: #5c5c6a;
-    --text-muted: #9a9aaa;
-    --accent: #00d4aa;
-    --accent-soft: rgba(0, 212, 170, 0.1);
-    --accent-glow: rgba(0, 212, 170, 0.3);
-    --border: rgba(0, 0, 0, 0.08);
-    --border-accent: rgba(0, 212, 170, 0.4);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NonLinearSection Tool | Domenico Gaudioso</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #0a0a0a;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent: #00d4aa; /* Il verde acqua tipico dello stile feagent */
+            --accent-dim: rgba(0, 212, 170, 0.1);
+            --border: #222222;
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
 
-    --term-bg: #0a0a10;
-    --term-surface: #12121a;
-    --term-border: rgba(255, 255, 255, 0.08);
-    --term-text: #f0f0f5;
-    --term-text-sec: #8a8a9a;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    --radius: 14px;
-    --radius-sm: 10px;
-    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-sans);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-  }
-  a { color: var(--accent); text-decoration: none; }
-  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        ul { list-style: none; }
 
-  /* HERO */
-  .hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
-  #meshCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-  .hero-content { position: relative; z-index: 2; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 14px; background: var(--surface);
-    border: 1px solid var(--border-accent); border-radius: 100px;
-    font-size: 13px; color: var(--text-secondary); font-family: var(--font-mono);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-  }
-  .badge-dot {
-    width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
-    box-shadow: 0 0 10px var(--accent), 0 0 4px var(--accent);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
-  }
-  .hero h1 {
-    font-size: clamp(48px, 9vw, 96px);
-    font-weight: 800; letter-spacing: -0.04em; margin: 24px 0 16px;
-    background: linear-gradient(180deg, #0a0a0f 0%, #6e6e7a 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; line-height: 1.1;
-  }
-  .hero .subtitle { font-size: clamp(16px, 2vw, 20px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 56px; }
+        /* Layout */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
 
-  /* TERMINALE HERO */
-  .terminal-wrap { perspective: 1200px; margin: 0 auto; max-width: 880px; position: relative; }
-  .terminal-glow {
-    position: absolute; inset: -50px;
-    background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 65%);
-    filter: blur(50px); opacity: 0.5;
-    animation: glow-pulse 4s ease-in-out infinite;
-    pointer-events: none; z-index: 0;
-  }
-  @keyframes glow-pulse {
-    0%, 100% { opacity: 0.3; transform: scale(0.95); }
-    50% { opacity: 0.6; transform: scale(1.08); }
-  }
-  .terminal {
-    position: relative; background: var(--term-bg);
-    border: 1px solid var(--border-accent); border-radius: 14px; overflow: hidden;
-    transform-style: preserve-3d; transition: transform 0.15s ease-out;
-    box-shadow: 0 0 0 1px rgba(0, 212, 170, 0.1), 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 80px rgba(0, 212, 170, 0.1);
-    z-index: 1;
-  }
-  .terminal-header {
-    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-    background: var(--term-surface); border-bottom: 1px solid var(--term-border);
-    position: relative; z-index: 3;
-  }
-  .terminal-dots { display: flex; gap: 6px; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; opacity: 0.9; }
-  .dot-red { background: #ff5f57; }
-  .dot-yellow { background: #febc2e; }
-  .dot-green { background: #28c840; }
-  .terminal-title {
-    flex: 1; text-align: center; font-family: var(--font-mono);
-    font-size: 12px; color: var(--term-text-sec); letter-spacing: 0.02em;
-  }
-  .terminal-body { position: relative; padding: 22px 24px; height: 400px; overflow: hidden; background: var(--term-bg); }
-  .perspective-grid {
-    position: absolute; inset: -50%;
-    background-image:
-      linear-gradient(rgba(0, 212, 170, 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 212, 170, 0.12) 1px, transparent 1px);
-    background-size: 44px 44px;
-    transform: perspective(400px) rotateX(60deg) translateY(0);
-    animation: grid-scroll 6s linear infinite;
-    pointer-events: none; z-index: 1;
-    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
-    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
-  }
-  @keyframes grid-scroll {
-    from { transform: perspective(400px) rotateX(60deg) translateY(0); }
-    to { transform: perspective(400px) rotateX(60deg) translateY(44px); }
-  }
-  .scanlines {
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0, 0, 0, 0.18) 2px, rgba(0, 0, 0, 0.18) 3px);
-    pointer-events: none; z-index: 4; opacity: 0.5;
-  }
-  .terminal-content {
-    position: relative; z-index: 5; font-family: var(--font-mono);
-    font-size: 12.5px; line-height: 1.65; text-align: left;
-    height: 100%; overflow-y: auto; overflow-x: hidden;
-    scrollbar-width: none; color: var(--term-text);
-  }
-  .terminal-content::-webkit-scrollbar { display: none; }
-  .term-line { white-space: pre-wrap; word-break: break-word; padding: 1px 0; }
-  .term-prompt { color: var(--accent); }
-  .term-input { color: var(--term-text); }
-  .term-output { color: var(--term-text-sec); }
-  .term-output-accent { color: var(--accent); }
-  .cursor {
-    display: inline-block; width: 8px; height: 14px; background: var(--accent);
-    vertical-align: text-bottom; margin-left: 2px;
-    animation: blink 1s steps(1) infinite;
-  }
-  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-  .terminal-badges { display: flex; justify-content: center; gap: 12px; margin-top: 36px; flex-wrap: wrap; }
-  .term-badge {
-    padding: 6px 14px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 100px; font-size: 12px; color: var(--text-secondary);
-    font-family: var(--font-mono); box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-  }
+        /* Header / Nav */
+        header {
+            padding: 2rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
 
-  /* SECTIONS */
-  .section { padding: 100px 0; position: relative; z-index: 2; background: var(--bg); }
-  .section-header { text-align: center; margin-bottom: 56px; }
-  .section-title { font-size: clamp(32px, 5vw, 48px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 16px; color: var(--text); }
-  .section-subtitle { font-size: 18px; color: var(--text-secondary); max-width: 580px; margin: 0 auto; }
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+        }
 
-  /* DEMO */
-  .scroll-demo-section {
-    padding: 110px 0 0; background: var(--bg);
-    position: relative; z-index: 2; border-top: 1px solid var(--border);
-  }
-  .scroll-demo-section.alt-bg .demo-head-zone { background: var(--surface); }
-  .demo-head { display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; align-items: end; padding-bottom: 56px; }
-  .demo-text .reveal-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
-  .demo-text.in-view .reveal-up { opacity: 1; transform: translateY(0); }
-  .demo-text.in-view .reveal-up.d1 { transition-delay: 0.1s; }
-  .demo-text.in-view .reveal-up.d2 { transition-delay: 0.2s; }
-  .demo-text.in-view .reveal-up.d3 { transition-delay: 0.3s; }
-  .demo-label { font-family: var(--font-mono); color: var(--accent); font-size: 14px; margin-bottom: 12px; display: block; letter-spacing: 0.18em; }
-  .demo-title { font-size: clamp(30px, 4.4vw, 46px); font-weight: 700; margin-bottom: 16px; line-height: 1.08; letter-spacing: -0.02em; }
-  .demo-desc { font-size: 17px; color: var(--text-secondary); margin-bottom: 0; }
+        .logo span { color: var(--accent); }
 
-  .demo-terminal {
-    background: var(--term-bg); border: 1px solid var(--term-border);
-    border-radius: 10px; overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12); font-family: var(--font-mono);
-  }
-  .demo-terminal-header {
-    background: var(--term-surface); padding: 8px 12px;
-    border-bottom: 1px solid var(--term-border);
-    font-size: 11px; color: var(--term-text-sec);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .demo-terminal-header .dots { display: flex; gap: 5px; }
-  .demo-terminal-header .dots span { width: 8px; height: 8px; border-radius: 50%; }
-  .demo-terminal-body { padding: 16px; font-size: 13px; color: var(--term-text); min-height: 132px; }
-  .dt-prompt { color: var(--accent); }
-  .dt-cmd { color: var(--term-text); }
-  .dt-out { color: var(--term-text-sec); margin-top: 4px; }
-  .dt-out.good { color: var(--accent); }
-  .dt-cursor {
-    display: inline-block; width: 7px; height: 13px; background: var(--accent);
-    vertical-align: text-bottom; margin-left: 2px;
-    animation: blink 1s steps(1) infinite;
-  }
+        .nav-links a {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-left: 2rem;
+        }
 
-  .demo-stage-wrap {
-    position: relative; width: 100%; height: 520px;
-    background: var(--term-bg); border-radius: 14px; overflow: hidden;
-    border: 1px solid var(--term-border);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-  }
-  .demo-stage-wrap canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-  .gl-layer { pointer-events: none; }
-  .stage-vignette {
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
-    pointer-events: none; z-index: 10;
-  }
-  .corner {
-    position: absolute; width: 24px; height: 24px; border: 2px solid rgba(0,212,170,0.5); z-index: 11;
-  }
-  .c-tl { top: 16px; left: 16px; border-right: none; border-bottom: none; }
-  .c-tr { top: 16px; right: 16px; border-left: none; border-bottom: none; }
-  .c-bl { bottom: 16px; left: 16px; border-right: none; border-top: none; }
-  .c-br { bottom: 16px; right: 16px; border-left: none; border-top: none; }
-  .hud {
-    position: absolute; font-family: var(--font-mono); font-size: 11px;
-    color: rgba(255,255,255,0.7); z-index: 12; letter-spacing: 0.08em;
-  }
-  .hud-tl { top: 16px; left: 56px; }
-  .hud-tc { top: 16px; left: 50%; transform: translateX(-50%); }
-  .hud-tr { top: 16px; right: 16px; }
-  .hud-bl { bottom: 16px; left: 56px; }
-  .hud-br { bottom: 16px; right: 16px; }
-  .rec {
-    display: inline-block; width: 8px; height: 8px; background: #ff5f57;
-    border-radius: 50%; margin-right: 6px; animation: rec-pulse 1.5s ease-in-out infinite;
-  }
-  @keyframes rec-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .nav-links a:hover { color: var(--accent); }
 
-  /* FEATURES */
-  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .feature-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 28px;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
-  .feature-icon {
-    width: 48px; height: 48px; background: var(--accent-soft);
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-size: 24px; margin-bottom: 16px;
-  }
-  .feature-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-  .feature-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        /* Hero Section */
+        .hero {
+            padding: 8rem 0 6rem;
+            position: relative;
+        }
 
-  /* CODE BLOCK */
-  .code-wrap {
-    background: var(--term-bg); border: 1px solid var(--term-border);
-    border-radius: var(--radius); overflow: hidden; margin-top: 40px;
-  }
-  .code-header {
-    background: var(--term-surface); padding: 10px 16px;
-    border-bottom: 1px solid var(--term-border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .code-dots { display: flex; gap: 6px; }
-  .code-dots span { width: 10px; height: 10px; border-radius: 50%; }
-  .code-content {
-    padding: 20px; font-family: var(--font-mono); font-size: 13px;
-    line-height: 1.7; color: var(--term-text); overflow-x: auto;
-  }
-  .code-comment { color: var(--term-text-sec); }
-  .code-command { color: var(--accent); }
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-  /* INFO BOX */
-  .info-box {
-    background: var(--accent-soft); border-left: 3px solid var(--accent);
-    padding: 16px 20px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    margin-top: 20px; font-size: 13px; color: var(--text-secondary);
-  }
-  .info-box a { color: var(--accent); text-decoration: underline; }
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
 
-  /* CTA */
-  .cta-section {
-    text-align: center; padding: 100px 0;
-    background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%);
-  }
-  .cta-title { font-size: clamp(32px, 5vw, 48px); font-weight: 700; margin-bottom: 16px; color: var(--text); }
-  .cta-subtitle { font-size: 18px; color: var(--text-secondary); max-width: 580px; margin: 0 auto 32px; }
-  .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 14px 28px; border-radius: 10px;
-    font-size: 15px; font-weight: 600; text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .btn-primary {
-    background: var(--accent); color: #fff;
-    box-shadow: 0 8px 24px rgba(0,212,170,0.3);
-  }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,212,170,0.4); }
-  .btn-secondary {
-    background: var(--surface); color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .btn-group { display: flex; gap: 1rem; }
 
-  /* FOOTER */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 40px 0; text-align: center;
-    font-size: 13px; color: var(--text-muted);
-    font-family: var(--font-mono);
-  }
-  footer a { color: var(--accent); }
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
 
-  /* RESPONSIVE */
-  @media (max-width: 900px) {
-    .demo-head { grid-template-columns: 1fr; gap: 32px; }
-    .features-grid { grid-template-columns: 1fr; }
-    .hero h1 { font-size: clamp(36px, 10vw, 56px); }
-  }
-</style>
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .btn:hover { transform: translateY(-2px); }
+
+        /* Canvas Background */
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* Features Grid */
+        .features {
+            padding: 4rem 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px -10px rgba(0, 212, 170, 0.1);
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Plot Containers inside Cards */
+        .plot-box {
+            background: #000;
+            border: 1px solid #222;
+            border-radius: 4px;
+            height: 200px;
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .plot-box svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Terminal Section */
+        .terminal-section {
+            padding: 4rem 0;
+        }
+
+        .terminal-window {
+            background: #0f0f0f;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #27c93f; }
+
+        .code-line {
+            display: block;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .cmd { color: var(--accent); }
+        .arg { color: #fff; }
+        .out { color: var(--text-muted); }
+        .success { color: #27c93f; }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Footer */
+        footer {
+            padding: 4rem 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .features { grid-template-columns: 1fr; }
+            #bg-canvas { width: 100%; opacity: 0.1; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- HERO -->
-<section class="hero" id="heroSection">
-  <canvas id="meshCanvas"></canvas>
-  <div class="container hero-content">
-    <div class="badge">
-      <span class="badge-dot"></span>
-      v1.0.0 — Sezione Trasformata CLI
-    </div>
-    <h1>CompositeSectionCheck</h1>
-    <p class="subtitle">Analisi elastica di travi composte acciaio-calcestruzzo. Calcola asse neutro, inerzia omogeneizzata e diagrammi di tensione con il metodo della sezione trasformata.</p>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">NonLinear<span>Section</span></div>
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#demo">Demo</a>
+                <a href="https://github.com/DomenicoGaudioso" target="_blank">GitHub</a>
+            </nav>
+        </header>
 
-    <div class="terminal-wrap" id="terminalWrap">
-      <div class="terminal-glow"></div>
-      <div class="terminal" id="terminal">
-        <div class="terminal-header">
-          <div class="terminal-dots">
-            <span class="dot dot-red"></span>
-            <span class="dot dot-yellow"></span>
-            <span class="dot dot-green"></span>
-          </div>
-          <div class="terminal-title">compositecheck — transformed section solver</div>
-        </div>
-        <div class="terminal-body">
-          <div class="perspective-grid"></div>
-          <div class="terminal-content" id="terminalContent"></div>
-          <div class="scanlines"></div>
-        </div>
-      </div>
-    </div>
+        <!-- Hero -->
+        <section class="hero">
+            <canvas id="bg-canvas"></canvas>
+            <h1>Advanced Structural<br>Analysis Tools.</h1>
+            <p>
+                Suite di strumenti open-source per l'analisi non lineare di sezioni in cemento armato. 
+                Calcolo domini M-N, campi tensionali e curve momento-curvatura con precisione scientifica.
+            </p>
+            <div class="btn-group">
+                <a href="https://github.com/DomenicoGaudioso/SectionTool" class="btn btn-primary">SectionTool</a>
+                <a href="https://github.com/DomenicoGaudioso/VSP_VerSectionPlus" class="btn">VSP Core</a>
+            </div>
+        </section>
 
-    <div class="terminal-badges">
-      <span class="term-badge">Sezione Trasformata</span>
-      <span class="term-badge">NTC2018</span>
-      <span class="term-badge">EN 1994-1-1</span>
-    </div>
-  </div>
-</section>
+        <!-- Features Grid with Plots -->
+        <section id="features" class="features">
+            
+            <!-- Card 1: Sezione -->
+            <div class="card">
+                <span class="card-icon">❖</span>
+                <h3>Modellazione Parametrica</h3>
+                <p>Definizione geometrica precisa di sezioni rettangolari, circolari o arbitrary con disposizione dettagliata delle armature.</p>
+                <div class="plot-box">
+                    <svg viewBox="0 0 300 200">
+                        <defs>
+                            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#222" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="300" height="200" fill="url(#grid)" />
+                        <!-- Concrete -->
+                        <rect x="100" y="40" width="100" height="120" fill="none" stroke="#00d4aa" stroke-width="2" />
+                        <!-- Rebars -->
+                        <circle cx="115" cy="55" r="4" fill="#fff" />
+                        <circle cx="150" cy="55" r="4" fill="#fff" />
+                        <circle cx="185" cy="55" r="4" fill="#fff" />
+                        <circle cx="115" cy="145" r="4" fill="#fff" />
+                        <circle cx="150" cy="145" r="4" fill="#fff" />
+                        <circle cx="185" cy="145" r="4" fill="#fff" />
+                        <!-- Axis -->
+                        <line x1="90" y1="100" x2="210" y2="100" stroke="#444" stroke-width="1" stroke-dasharray="4" />
+                        <text x="220" y="104" fill="#666" font-size="10" font-family="monospace">NA</text>
+                    </svg>
+                </div>
+            </div>
 
-<!-- DEMO 1: PRE-COMPOSITO -->
-<section class="scroll-demo-section" id="demo1">
-  <div class="container demo-head-zone">
-    <div class="demo-head">
-      <div class="demo-text">
-        <span class="demo-label reveal-up d1">CASE STUDY 01 · FASE PRE-COMPOSITO</span>
-        <h2 class="demo-title reveal-up d2">Trave d'Acciaio Sotto Carico Proprio</h2>
-        <p class="demo-desc reveal-up d3">
-          Nella fase costruttiva iniziale, solo il profilo d'acciaio resiste ai carichi. Il diagramma delle tensioni mostra compressione sopra l'asse neutro e trazione sotto — distribuzione lineare secondo Navier.
-        </p>
-      </div>
-      <div class="demo-terminal reveal-up d3">
-        <div class="demo-terminal-header">
-          <div class="dots">
-            <span style="background:#ff5f57"></span>
-            <span style="background:#febc2e"></span>
-            <span style="background:#28c840"></span>
-          </div>
-          <span>compositecheck — phase pre</span>
-        </div>
-        <div class="demo-terminal-body">
-          <div><span class="dt-prompt">➜</span> <span class="dt-cmd" id="t1cmd"></span><span class="dt-cursor"></span></div>
-          <div class="dt-out" id="t1out1" style="opacity:0">✓ Sezione: HEA 400 (S355)</div>
-          <div class="dt-out" id="t1out2" style="opacity:0">✓ y_NA = 195.0 mm (baricentro)</div>
-          <div class="dt-out good" id="t1out3" style="opacity:0">✓ σ_max = 187.4 MPa @ fibra inferiore</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="demo-stage-wrap">
-    <canvas id="stage1"></canvas>
-    <canvas id="gl1" class="gl-layer"></canvas>
-    <div class="scanlines"></div>
-    <div class="stage-vignette"></div>
-    <span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
-    <div class="hud hud-tl"><span class="rec"></span> PRE-COMPOSITO · SOLO ACCIAIO</div>
-    <div class="hud hud-tc" id="vw1">DIAGRAMMA σ(y)</div>
-    <div class="hud hud-tr" id="tc1">M = 1200 kNm</div>
-    <div class="hud hud-bl" id="ro1">σ_max = 187.4 MPa</div>
-    <div class="hud hud-br">CompositeSectionCheck · elastic analysis</div>
-  </div>
-</section>
+            <!-- Card 2: Dominio M-N -->
+            <div class="card">
+                <span class="card-icon">∑</span>
+                <h3>Domini di Resistenza</h3>
+                <p>Calcolo dell'inviluppo limite N-M secondo EC2. Verifica immediata dello stato di sollecitazione rispetto alla capacità portante.</p>
+                <div class="plot-box">
+                    <svg viewBox="0 0 300 200">
+                        <rect width="300" height="200" fill="url(#grid)" />
+                        <!-- Axes -->
+                        <line x1="40" y1="180" x2="260" y2="180" stroke="#444" stroke-width="1" />
+                        <line x1="40" y1="180" x2="40" y2="20" stroke="#444" stroke-width="1" />
+                        <!-- Domain Curve -->
+                        <path d="M 40 180 Q 100 180 150 100 Q 180 40 220 30 L 240 180 Z" 
+                              fill="rgba(0, 212, 170, 0.1)" stroke="#00d4aa" stroke-width="2" />
+                        <!-- Point -->
+                        <circle cx="150" cy="110" r="5" fill="#fff" />
+                        <line x1="150" y1="110" x2="150" y2="180" stroke="#fff" stroke-width="1" stroke-dasharray="2" />
+                        <text x="155" y="105" fill="#fff" font-size="10" font-family="monospace">Work Point</text>
+                    </svg>
+                </div>
+            </div>
 
-<!-- DEMO 2: POST-COMPOSITO -->
-<section class="scroll-demo-section alt-bg" id="demo2">
-  <div class="container demo-head-zone">
-    <div class="demo-head">
-      <div class="demo-text">
-        <span class="demo-label reveal-up d1">CASE STUDY 02 · FASE POST-COMPOSITO</span>
-        <h2 class="demo-title reveal-up d2">Sezione Omogeneizzata Acciaio-Calcestruzzo</h2>
-        <p class="demo-desc reveal-up d3">
-          Con la soletta collaborante, il calcestruzzo viene trasformato in acciaio equivalente (n = E_s/E_c). L'asse neutro sale, l'inerzia aumenta e le tensioni si ridistribuiscono: la soletta lavora compressa, l'acciaio ha zona compressa e tesa.
-        </p>
-      </div>
-      <div class="demo-terminal reveal-up d3">
-        <div class="demo-terminal-header">
-          <div class="dots">
-            <span style="background:#ff5f57"></span>
-            <span style="background:#febc2e"></span>
-            <span style="background:#28c840"></span>
-          </div>
-          <span>compositecheck — phase post</span>
-        </div>
-        <div class="demo-terminal-body">
-          <div><span class="dt-prompt">➜</span> <span class="dt-cmd" id="t2cmd"></span><span class="dt-cursor"></span></div>
-          <div class="dt-out" id="t2out1" style="opacity:0">✓ n = 6.12 · b_eff = 3000 mm</div>
-          <div class="dt-out" id="t2out2" style="opacity:0">✓ y_NA = 285.3 mm dall'estradosso</div>
-          <div class="dt-out good" id="t2out3" style="opacity:0">✓ I_tr = 2.84×10⁹ mm⁴</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="demo-stage-wrap">
-    <canvas id="stage2"></canvas>
-    <canvas id="gl2" class="gl-layer"></canvas>
-    <div class="scanlines"></div>
-    <div class="stage-vignette"></div>
-    <span class="corner c-tl"></span><span class="corner c-tr"></span><span class="corner c-bl"></span><span class="corner c-br"></span>
-    <div class="hud hud-tl"><span class="rec"></span> POST-COMPOSITO · SEZIONE TRASFORMATA</div>
-    <div class="hud hud-tc" id="vw2">DIAGRAMMA σ(y)</div>
-    <div class="hud hud-tr" id="tc2">M = 1200 kNm</div>
-    <div class="hud hud-bl" id="ro2">σ_s,max = 156.2 MPa · σ_c,max = 12.8 MPa</div>
-    <div class="hud hud-br">CompositeSectionCheck · elastic analysis</div>
-  </div>
-</section>
+            <!-- Card 3: Stress Field -->
+            <div class="card">
+                <span class="card-icon">σ</span>
+                <h3>Campo Tensionale</h3>
+                <p>Visualizzazione dei diagrammi di deformazione (ε) e tensione (σ) nel calcestruzzo e nell'acciaio per ogni step iterativo.</p>
+                <div class="plot-box">
+                    <svg viewBox="0 0 300 200">
+                        <rect width="300" height="200" fill="url(#grid)" />
+                        <!-- Section -->
+                        <rect x="80" y="40" width="60" height="120" fill="none" stroke="#666" stroke-width="1" />
+                        <!-- Strain Diagram -->
+                        <path d="M 60 40 L 90 100 L 60 160" fill="none" stroke="#00d4aa" stroke-width="2" />
+                        <line x1="60" y1="40" x2="60" y2="160" stroke="#333" stroke-width="1" />
+                        <!-- Labels -->
+                        <text x="50" y="100" fill="#00d4aa" font-size="10" font-family="monospace" transform="rotate(-90 50 100)">ε</text>
+                        <text x="150" y="100" fill="#fff" font-size="10" font-family="monospace">Deformazioni Piane</text>
+                    </svg>
+                </div>
+            </div>
 
-<!-- FEATURES -->
-<section class="section">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Perché CompositeSectionCheck?</h2>
-      <p class="section-subtitle">Uno strumento tecnico per ingegneri strutturali che lavorano con travi composte secondo NTC2018 ed Eurocodice 4.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">📐</div>
-        <h3 class="feature-title">Sezione Trasformata</h3>
-        <p class="feature-desc">Omogeneizzazione automatica calcestruzzo-acciaio con coefficiente n = E_s/E_c,eff. Calcolo preciso di baricentro e inerzia.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3 class="feature-title">Diagrammi di Tensione</h3>
-        <p class="feature-desc">Visualizzazione grafica della distribuzione lineare σ(y) = M·(y-y_NA)/I_tr per acciaio e calcestruzzo separatamente.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔄</div>
-        <h3 class="feature-title">Fasi Costruttive</h3>
-        <p class="feature-desc">Confronto immediato tra fase pre-composito (solo acciaio) e post-composito (sezione omogeneizzata con soletta).</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3 class="feature-title">CLI Automation</h3>
-        <p class="feature-desc">Esegui analisi batch, genera report e integra nel tuo workflow di progettazione strutturale automatizzata.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📚</div>
-        <h3 class="feature-title">Riferimenti Normativi</h3>
-        <p class="feature-desc">Allineamento a NTC2018 e EN 1994-1-1 (Eurocodice 4) per la verifica di travi composte acciaio-calcestruzzo.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔓</div>
-        <h3 class="feature-title">Open Source</h3>
-        <p class="feature-desc">Codice trasparente su GitHub. Studia gli algoritmi, modifica e contribuisci al miglioramento dello strumento.</p>
-      </div>
+            <!-- Card 4: M-Chi -->
+            <div class="card">
+                <span class="card-icon">∫</span>
+                <h3>Curva Momento-Curvatura</h3>
+                <p>Analisi pushover della sezione per valutare la duttilità, il punto di snervamento e la curvatura ultima.</p>
+                <div class="plot-box">
+                    <svg viewBox="0 0 300 200">
+                        <rect width="300" height="200" fill="url(#grid)" />
+                        <!-- Axes -->
+                        <line x1="40" y1="180" x2="260" y2="180" stroke="#444" stroke-width="1" />
+                        <line x1="40" y1="180" x2="40" y2="20" stroke="#444" stroke-width="1" />
+                        <!-- Curve -->
+                        <path d="M 40 180 C 100 180 150 150 180 80 C 190 60 200 50 210 45" 
+                              fill="none" stroke="#00d4aa" stroke-width="2" />
+                        <!-- Points -->
+                        <circle cx="150" cy="150" r="3" fill="#fff" />
+                        <text x="155" y="145" fill="#888" font-size="9" font-family="monospace">Yield</text>
+                        <circle cx="210" cy="45" r="3" fill="#ff5f56" />
+                        <text x="215" y="40" fill="#888" font-size="9" font-family="monospace">Ultimate</text>
+                    </svg>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Terminal Demo -->
+        <section id="demo" class="terminal-section">
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                </div>
+                <div id="typewriter">
+                    <span class="code-line cmd">$ sectiontool</span> create --type rect --b 300 --h 400<br>
+                    <span class="code-line out">> Initializing geometry...</span><br>
+                    <span class="code-line out">> Material: C25/30, B450C</span><br>
+                    <span class="code-line cmd">$ versection</span> analyze --load "N=500,M=120"<br>
+                    <span class="code-line out">> Calculating neutral axis depth...</span><br>
+                    <span class="code-line success">> VERIFICATION PASSED (Uls = 1.45)</span><br>
+                    <span class="code-line out">> Generating M-N domain points...</span><br>
+                    <span class="code-line cmd">$ plot</span> --output stress_field.png<br>
+                    <span class="code-line success">> Done in 0.04s</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2023 Domenico Gaudioso. Open Source Engineering Tools.</p>
+            <p style="margin-top: 0.5rem; opacity: 0.5;">Built with precision for structural engineers.</p>
+        </footer>
     </div>
 
-    <div class="code-wrap">
-      <div class="code-header">
-        <div class="code-dots">
-          <span style="background:#ff5f57"></span>
-          <span style="background:#febc2e"></span>
-          <span style="background:#28c840"></span>
-        </div>
-        <span>compositecheck — CLI examples</span>
-      </div>
-      <pre class="code-content" id="codeContent"><span class="code-comment"># Installa CompositeSectionCheck</span>
-<span class="code-command">pip install composite-section-check</span>
+    <script>
+        // Simple Canvas Animation for Background (Abstract Section Rotation)
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let angle = 0;
 
-<span class="code-comment"># Analizza una sezione composita</span>
-<span class="code-command">compositecheck solve --profile HEA400 --slab 250 --width 3000 --moment 1200</span>
+        function resize() {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+        }
+        
+        window.addEventListener('resize', resize);
+        resize();
 
-<span class="code-comment"># Esporta i risultati</span>
-<span class="code-command">compositecheck export --format json --output results/</span>
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.strokeStyle = '#00d4aa';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.2;
 
-<span class="code-comment"># Genera il plot delle tensioni</span>
-<span class="code-command">compositecheck plot --phase post --output stress_diagram.png</span></pre>
-    </div>
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(angle);
+            
+            // Draw abstract section shape
+            ctx.beginPath();
+            ctx.rect(-60, -80, 120, 160);
+            ctx.stroke();
+            
+            // Draw rebars
+            for(let i = -40; i <= 40; i+=40) {
+                ctx.beginPath();
+                ctx.arc(i, -60, 4, 0, Math.PI * 2);
+                ctx.arc(i, 60, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
-    <div class="info-box">
-      ℹ️ CompositeSectionCheck è uno strumento didattico e professionale open source. <a href="https://github.com/DomenicoGaudioso/CompositeSectionCheck">Contribuisci su GitHub →</a>
-    </div>
-  </div>
-</section>
+            ctx.restore();
 
-<!-- CTA -->
-<section class="cta-section">
-  <div class="container">
-    <h2 class="cta-title">Inizia a usare CompositeSectionCheck</h2>
-    <p class="cta-subtitle">Unisciti agli ingegneri che usano CompositeSectionCheck per l'analisi rapida di travi composte. Disponibile come pacchetto Python.</p>
-    <div class="cta-buttons">
-      <a href="https://github.com/DomenicoGaudioso/CompositeSectionCheck" class="btn btn-primary" target="_blank" rel="noopener noreferrer">⭐ Star su GitHub</a>
-      <a href="https://github.com/DomenicoGaudioso/CompositeSectionCheck" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Documentazione →</a>
-    </div>
-  </div>
-</section>
+            angle += 0.002;
+            requestAnimationFrame(draw);
+        }
 
-<!-- FOOTER -->
-<footer>
-  <div class="container">
-    <p>CompositeSectionCheck — creato da <a href="https://github.com/DomenicoGaudioso" target="_blank" rel="noopener noreferrer">Domenico Gaudioso</a></p>
-    <p style="margin-top:8px;">NTC2018 · EN 1994-1-1 · Open Source</p>
-  </div>
-</footer>
-
-<script>
-// MESH ANIMATION
-const canvas = document.getElementById('meshCanvas');
-const ctx = canvas.getContext('2d');
-let nodes = [];
-function resize() { canvas.width = window.innerWidth; canvas.height = Math.max(600, window.innerHeight); }
-window.addEventListener('resize', resize); resize();
-
-class Node { constructor(x,y) { this.x=x; this.y=y; this.vx=(Math.random()-0.5)*0.3; this.vy=(Math.random()-0.5)*0.3; } update() { this.x+=this.vx; this.y+=this.vy; if(this.x<50||this.x>canvas.width-50) this.vx*=-1; if(this.y<50||this.y>canvas.height-50) this.vy*=-1; } }
-for(let i=0;i<60;i++) nodes.push(new Node(Math.random()*canvas.width, Math.random()*canvas.height));
-
-function drawMesh() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.strokeStyle = 'rgba(0,212,170,0.15)'; ctx.lineWidth = 1;
-  for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++) {
-    const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y, d=Math.sqrt(dx*dx+dy*dy);
-    if(d<180) { ctx.globalAlpha = 1-d/180; ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke(); }
-  }
-  nodes.forEach(n => { n.update(); ctx.fillStyle='#00d4aa'; ctx.beginPath(); ctx.arc(n.x,n.y,3,0,Math.PI*2); ctx.fill(); });
-  requestAnimationFrame(drawMesh);
-}
-drawMesh();
-
-// TERMINAL TYPEWRITER
-const terminalLines = [
-  { type: 'input', text: 'compositecheck init bridge-section' },
-  { type: 'output', text: '✓ Initializing composite section analysis...' },
-  { type: 'input', text: 'compositecheck solve --profile HEA400 --slab 250 --width 3000' },
-  { type: 'output', text: '✓ Steel: HEA400 (A=15900 mm², I=4.50×10⁸ mm⁴)' },
-  { type: 'output', text: '✓ Concrete: t=250mm, b_eff=3000mm, C30/37' },
-  { type: 'output', text: '✓ n = E_s/E_c = 210000/34300 = 6.12' },
-  { type: 'input', text: 'compositecheck analyze --moment 1200' },
-  { type: 'output', text: '✓ Transformed section calculated' },
-  { type: 'output', text: '✓ y_NA = 285.3 mm from top' },
-  { type: 'output', text: '✓ I_tr = 2.84×10⁹ mm⁴' },
-  { type: 'output', text: '✓ Stress field exported' },
-];
-
-let lineIndex = 0, charIndex = 0;
-const termEl = document.getElementById('terminalContent');
-function typeLine() {
-  if(lineIndex >= terminalLines.length) { setTimeout(() => { lineIndex=0; charIndex=0; termEl.innerHTML=''; typeLine(); return; }); }
-  const line = terminalLines[lineIndex];
-  if(charIndex === 0) {
-    const el = document.createElement('div');
-    el.className = 'term-line';
-    if(line.type === 'input') el.innerHTML = '<span class="term-prompt">➜</span> <span class="term-input"></span><span class="cursor"></span>';
-    else el.innerHTML = '<span class="term-output">' + line.text + '</span>';
-    termEl.appendChild(el);
-    termEl.scrollTop = termEl.scrollHeight;
-  }
-  if(line.type === 'input' && charIndex < line.text.length) {
-    const inputEl = termEl.lastElementChild.querySelector('.term-input');
-    inputEl.textContent += line.text[charIndex];
-    charIndex++;
-    setTimeout(typeLine, 30 + Math.random()*20);
-  } else {
-    const cursor = termEl.lastElementChild?.querySelector('.cursor');
-    if(cursor) cursor.remove();
-    lineIndex++; charIndex = 0;
-    setTimeout(typeLine, 150);
-  }
-}
-typeLine();
-
-// SCROLL REVEAL
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if(e.isIntersecting) {
-      e.target.classList.add('in-view');
-      startDemo(e.target.id);
-    }
-  });
-}, { threshold: 0.3 });
-document.querySelectorAll('.demo-text').forEach(el => observer.observe(el));
-
-// DEMO ANIMATIONS
-function startDemo(id) {
-  if(id === 'demo1') {
-    document.getElementById('t1cmd').textContent = 'compositecheck phase pre --profile HEA400';
-    setTimeout(() => { document.getElementById('t1out1').style.opacity=1; }, 300);
-    setTimeout(() => { document.getElementById('t1out2').style.opacity=1; }, 800);
-    setTimeout(() => { document.getElementById('t1out3').style.opacity=1; }, 1300);
-    animateStressPlot('stage1', 'pre');
-  } else if(id === 'demo2') {
-    document.getElementById('t2cmd').textContent = 'compositecheck phase post --slab 250 --width 3000';
-    setTimeout(() => { document.getElementById('t2out1').style.opacity=1; }, 300);
-    setTimeout(() => { document.getElementById('t2out2').style.opacity=1; }, 800);
-    setTimeout(() => { document.getElementById('t2out3').style.opacity=1; }, 1300);
-    animateStressPlot('stage2', 'post');
-  }
-}
-
-// STRESS PLOT ANIMATION
-function animateStressPlot(canvasId, phase) {
-  const c = document.getElementById(canvasId);
-  const cx = c.getContext('2d');
-  c.width = c.offsetWidth; c.height = c.offsetHeight;
-
-  const W = c.width, H = c.height;
-  const margin = { top: 40, right: 180, bottom: 40, left: 60 };
-  const plotW = W - margin.left - margin.right;
-  const plotH = H - margin.top - margin.bottom;
-
-  const steelH = 390, tf = 19, tw = 11;
-  const slabT = phase === 'post' ? 250 : 0;
-  const totalH = steelH + slabT;
-  const scale = plotH / (totalH + 100);
-  const baseY = margin.top + (totalH + 50) * scale;
-  const mapY = y => baseY - y * scale;
-
-  const yNA_pre = steelH / 2;
-  const yNA_post = 285.3;
-  const yNA = phase === 'pre' ? yNA_pre : yNA_post;
-  const naY = mapY(yNA);
-
-  // Grid
-  cx.strokeStyle = '#242938'; cx.lineWidth = 1;
-  for(let i=0; i<=5; i++) {
-    const y = margin.top + i * plotH / 5;
-    cx.beginPath(); cx.moveTo(margin.left, y); cx.lineTo(W - margin.right, y); cx.stroke();
-  }
-
-  // Y-axis
-  cx.strokeStyle = '#596174'; cx.lineWidth = 1.5;
-  cx.beginPath(); cx.moveTo(margin.left, margin.top); cx.lineTo(margin.left, H - margin.bottom); cx.stroke();
-  cx.fillStyle = '#8b91a7'; cx.font = '11px monospace';
-  cx.fillText('y [mm]', margin.left - 10, margin.top - 8);
-
-  // Y labels
-  for(let i=0; i<=4; i++) {
-    const yy = margin.top + i * plotH / 4;
-    const val = Math.round(totalH * (1 - i/4));
-    cx.beginPath(); cx.moveTo(margin.left - 8, yy); cx.lineTo(margin.left, yy); cx.stroke();
-    cx.fillText(val.toString(), margin.left - 14, yy + 4);
-  }
-
-  const centerX = margin.left + plotW / 2 - 40;
-
-  // Concrete slab
-  if(phase === 'post') {
-    const slabW = Math.min(200, 3000 * scale * 0.4);
-    cx.fillStyle = 'rgba(145,164,255,0.7)';
-    cx.strokeStyle = '#aebaff';
-    cx.fillRect(centerX - slabW/2, mapY(steelH + slabT), slabW, slabT * scale);
-    cx.strokeRect(centerX - slabW/2, mapY(steelH + slabT), slabW, slabT * scale);
-    cx.fillStyle = '#fff'; cx.fillText('Soletta', centerX, mapY(steelH + slabT/2) + 4);
-  }
-
-  // Steel I-beam
-  const flangeW = 100, webW = tw * 3;
-  cx.fillStyle = '#d4d8e7'; cx.strokeStyle = '#fff';
-  cx.fillRect(centerX - flangeW/2, mapY(steelH), flangeW, tf * scale);
-  cx.strokeRect(centerX - flangeW/2, mapY(steelH), flangeW, tf * scale);
-  cx.fillRect(centerX - flangeW/2, mapY(tf), flangeW, tf * scale);
-  cx.strokeRect(centerX - flangeW/2, mapY(tf), flangeW, tf * scale);
-  cx.fillRect(centerX - webW/2, mapY(steelH), webW, (steelH - 2*tf) * scale);
-  cx.strokeRect(centerX - webW/2, mapY(steelH), webW, (steelH - 2*tf) * scale);
-  cx.fillStyle = '#0a0a10'; cx.fillText('HEA 400', centerX, mapY(steelH/2) + 4);
-
-  // Neutral axis
-  cx.strokeStyle = '#ff7185'; cx.lineWidth = 1.5; cx.setLineDash([6,5]);
-  cx.beginPath(); cx.moveTo(margin.left, naY); cx.lineTo(W - margin.right, naY); cx.stroke();
-  cx.setLineDash([]);
-  cx.fillStyle = '#ff7185'; cx.fillText('NA ' + yNA.toFixed(1) + ' mm', W - margin.right + 10, naY + 4);
-
-  // Stress diagram
-  const stressX = W - margin.right + 60;
-  const stressMaxWidth = 90;
-
-  cx.strokeStyle = '#596174'; cx.lineWidth = 1.5;
-  cx.beginPath(); cx.moveTo(stressX, margin.top); cx.lineTo(stressX, H - margin.bottom); cx.stroke();
-  cx.fillStyle = '#8b91a7'; cx.fillText('σ [MPa]', stressX, margin.top - 8);
-
-  if(phase === 'pre') {
-    const maxTens = 187.4, maxComp = 187.4;
-    const tensW = Math.min(stressMaxWidth, maxTens / 400 * stressMaxWidth);
-    const compW = Math.min(stressMaxWidth, maxComp / 400 * stressMaxWidth);
-
-    cx.fillStyle = 'rgba(34,197,86,0.7)';
-    cx.beginPath();
-    cx.moveTo(stressX, naY);
-    cx.lineTo(stressX, mapY(0));
-    cx.lineTo(stressX + tensW, mapY(0));
-    cx.closePath(); cx.fill();
-
-    cx.fillStyle = 'rgba(239,68,68,0.7)';
-    cx.beginPath();
-    cx.moveTo(stressX, mapY(steelH));
-    cx.lineTo(stressX, naY);
-    cx.lineTo(stressX - compW, mapY(steelH));
-    cx.closePath(); cx.fill();
-
-    cx.fillStyle = '#22c55e'; cx.fillText('+' + maxTens.toFixed(1), stressX + tensW + 8, mapY(0) + 4);
-    cx.fillStyle = '#ef4444'; cx.fillText('-' + maxComp.toFixed(1), stressX - compW - 45, mapY(steelH) + 12);
-  } else {
-    const sigS_top = 89.2, sigS_bot = 156.2, sigC = 12.8;
-    const steelTopY = mapY(steelH), steelBotY = mapY(0);
-
-    const steelW_tens = Math.min(stressMaxWidth, sigS_bot / 400 * stressMaxWidth);
-    const steelW_comp = Math.min(stressMaxWidth, sigS_top / 400 * stressMaxWidth);
-    const concW = Math.min(stressMaxWidth * 0.6, sigC / 50 * stressMaxWidth * 0.6);
-
-    cx.fillStyle = 'rgba(168,85,247,0.75)';
-    cx.beginPath();
-    cx.moveTo(stressX, mapY(steelH + slabT));
-    cx.lineTo(stressX, mapY(steelH));
-    cx.lineTo(stressX - concW, mapY(steelH));
-    cx.lineTo(stressX - concW * 0.7, mapY(steelH + slabT/2));
-    cx.closePath(); cx.fill();
-
-    cx.fillStyle = 'rgba(34,197,86,0.75)';
-    cx.beginPath();
-    cx.moveTo(stressX, naY);
-    cx.lineTo(stressX, steelBotY);
-    cx.lineTo(stressX + steelW_tens, steelBotY);
-    cx.closePath(); cx.fill();
-
-    cx.fillStyle = 'rgba(239,68,68,0.7)';
-    cx.beginPath();
-    cx.moveTo(stressX, steelTopY);
-    cx.lineTo(stressX, naY);
-    cx.lineTo(stressX - steelW_comp, steelTopY);
-    cx.closePath(); cx.fill();
-
-    cx.fillStyle = '#d7c8ff'; cx.fillText('σ_c=' + sigC.toFixed(1), stressX - concW - 45, mapY(steelH + slabT/2));
-    cx.fillStyle = '#22c55e'; cx.fillText('+' + sigS_bot.toFixed(1), stressX + steelW_tens + 8, steelBotY + 4);
-    cx.fillStyle = '#ffb2bd'; cx.fillText('-' + sigS_top.toFixed(1), stressX - steelW_comp - 45, steelTopY + 12);
-  }
-}
-</script>
+        draw();
+    </script>
 </body>
 </html>
