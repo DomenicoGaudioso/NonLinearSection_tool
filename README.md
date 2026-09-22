@@ -19,8 +19,7 @@ Il sito racconta, con simulazioni animate live (stile feagent), il funzionamento
 - **Multi-materiale e getti successivi**: ogni getto ha geometria e legge propria, con predeformazioni (Vordehnung); trefoli di precompressione e barre con legge indipendente.
 - **Fessurazione e viscosità**: tension stiffening (Mitwirkung) e viscosità semplificata con φ.
 - **Analisi uniassiale e biassiale**: curva M-χ, dominio N-M, superficie N-Mx-My, verifica del punto.
-- **Validazione**: algoritmi ricondotti al programma di riferimento INCA2 / Stab2D-NL, suite di convalida dedicata (tests/).
-- **UI Streamlit** (`strutturanl/ui/app.py`) con import delle sezioni `.inc` di INCA2; grafici matplotlib/plotly.
+- **UI Streamlit** (`strutturanl/ui/app.py`) con import delle sezioni da file; grafici matplotlib/plotly.
 
 ## Struttura
 

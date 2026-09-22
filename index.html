@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NonLinearSection — Analisi non lineare di sezioni</title>
-<meta name="description" content="Analisi non lineare di sezioni in c.a., c.a.p., acciaio e miste: legami costitutivi, curva momento-curvatura, domini di interazione N-M e N-Mx-My. Validato su INCA2.">
+<meta name="description" content="Analisi non lineare di sezioni in c.a., c.a.p., acciaio e miste: legami costitutivi, curva momento-curvatura, domini di interazione N-M e N-Mx-My.">
 <style>
 
   :root {
@@ -444,7 +444,7 @@
       <span class="term-badge">CA / CAP / Acciaio</span>
       <span class="term-badge">Curva M-χ</span>
       <span class="term-badge">Dominio N-M</span>
-      <span class="term-badge">Validato INCA2</span>
+      <span class="term-badge">N-Mx-My</span>
     </div>
     <div class="law-tags" id="heroLaws"></div>
   </div>
@@ -590,7 +590,7 @@
       <div class="flow-step">
         <span class="fs-n">01 · GEOMETRIA</span>
         <h4>Sezione arbitraria</h4>
-        <p>Poligoni con fori, cerchi/anelli, barre a gruppi, trefoli, getti successivi. File .inc INCA2 importabili.</p>
+        <p>Poligoni con fori, cerchi/anelli, barre a gruppi, trefoli, getti successivi. Sezioni importabili da file.</p>
       </div>
       <div class="flow-step">
         <span class="fs-n">02 · MATERIALI</span>
@@ -616,7 +616,7 @@
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">Perché NonLinearSection?</h2>
-      <p class="section-subtitle">Il motore di sezione di StrutturaNL, con gli algoritmi ricondotti al programma madre e una suite di convalida dedicata.</p>
+      <p class="section-subtitle">Il motore di sezione di StrutturaNL: ogni fibra della sezione risponde con la propria legge costitutiva, senza linearizzazioni.</p>
     </div>
     <div class="features-grid">
       <div class="feature-card">
@@ -646,8 +646,8 @@
       </div>
       <div class="feature-card">
         <div class="feature-icon">🛡️</div>
-        <h3 class="feature-title">Validato su INCA2</h3>
-        <p class="feature-desc">Algoritmi decodificati dal programma di riferimento e suite di convalida dedicata (test INCA2, Stab2D-NL, Dalben). UI Streamlit e grafici matplotlib/plotly.</p>
+        <h3 class="feature-title">Interfaccia &amp; Grafici</h3>
+        <p class="feature-desc">UI Streamlit con anteprima delle leggi σ-ε, esempi pronti al caricamento e grafici matplotlib/plotly per ogni risultato.</p>
       </div>
     </div>
   </div>
@@ -672,13 +672,13 @@
 <span class="code-comment"># · legami σ-ε non lineari EC2 / DIN 1045 (medi e progetto)</span>
 <span class="code-comment"># · sezioni multi-getto con fori, barre, trefoli</span>
 <span class="code-comment"># · curva M-χ e dominio N-M · superficie N-Mx-My</span>
-<span class="code-comment"># · import sezioni .inc · esempi del manuale inclusi</span>
+<span class="code-comment"># · sezioni importabili da file · esempi pronti al caricamento</span>
 
 <span class="code-comment"># Catalogo completo delle app</span>
 <span class="code-command">https://civilbox.xyz/tools</span></pre>
     </div>
     <p class="install-note">
-      ℹ️ L'app carica subito l'esempio del manuale (rettangolo 400×600 con 4Ø28) e importa le sezioni <code>.inc</code> di INCA2. <a href="https://civilbox.xyz/tools">Tutte le app su CivilBox</a>.
+      ℹ️ L'app carica subito un esempio pronto (rettangolo 400×600 con 4Ø28) e importa le sezioni da file. <a href="https://civilbox.xyz/tools">Tutte le app su CivilBox</a>.
     </p>
   </div>
 </section>
@@ -1364,7 +1364,7 @@
   const SITE_TERMINAL = [
     { type: 'input', text: 'apps.civilbox.xyz/nonlinear-section' },
     { type: 'output', text: '✓ app CivilBox · motore strutturanl · sezioni' },
-    { type: 'input', text: 'nls esempio --manuale rettangolo-400x600' },
+    { type: 'input', text: 'nls esempio rettangolo-400x600' },
     { type: 'output', text: '✓ esempio caricato: rettangolo 400×600 · 4Ø28' },
     { type: 'input', text: 'nls leggi --cls C30/37 EC2 medi --acciaio B500B' },
     { type: 'output', text: '✓ Parabel-Rechteck · eps.c1 -1.75‰ · eps.cu -3.5‰' },
