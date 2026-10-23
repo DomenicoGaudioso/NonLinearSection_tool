@@ -4,14 +4,12 @@ Sito demo / landing page di **[SectionTool](https://github.com/DomenicoGaudioso/
 
 👉 **[Guarda la Demo Interattiva Web](https://domenicogaudioso.github.io/NonLinearSection_tool/)** 👈
 
-Il sito racconta, con simulazioni animate live (stile feagent), il funzionamento del tool di verifica delle sezioni.
+La pagina presenta il tool di verifica delle sezioni in continuità con il [sito personale](https://domenicogaudioso.github.io/DomenicoGaudioso/): prima una sezione calcolata dal motore, poi la parte tecnica.
 
 ## Contenuti del sito
 
-- **CASE 01 · Sezione & materiali** — geometria arbitraria (poligoni con fori, cerchi/anelli, gruppi di barre, trefoli, getti successivi) e legami σ-ε non lineari: parabola-rettangolo EC2/DIN 1045, acciaio elastoplastico con incrudimento, tension stiffening.
-- **CASE 02 · Momento-curvatura** — piano delle deformazioni ε = ε₀ + κ·y in equilibrio con (N, M): curva M-χ con fessurazione, snervamento, ramo ultimo e curvatura ultima per la duttilità.
-- **CASE 03 · Domini di interazione** — dominio N-M allo SLU con diagramma limite EC2, superficie biassiale N-Mx-My, verifica del punto con Grenzdehnungen.
-- Flusso di calcolo (geometria → materiali → equilibrio → output), feature grid e guida all'installazione.
+- **Esploratore interattivo**: sezione, dominio N-M e curva momento-curvatura di un pilastro 400 x 600 (C30/37, B450C, NTC 2018) calcolati con il motore dell'app per 13 valori dello sforzo normale; i dati sono incorporati in `index.html`.
+- **Parte tecnica**: convenzioni, materiali, sezione e input, verifiche SLU con i riferimenti normativi, esercizio, elaborazioni, relazione Word, integrazioni (feagent, IA, API) e modi per ottenere l'app.
 
 ## Funzionalità del motore (SectionTool / StrutturaNL)
 
@@ -23,7 +21,8 @@ Il sito racconta, con simulazioni animate live (stile feagent), il funzionamento
 
 ## Struttura
 
-- `index.html` — pagina completa e autoconsistente (CSS + JS inline, animazioni canvas 2D + vista 3D three.js), nessuna build richiesta.
+- `index.html` — pagina autoconsistente (CSS e JavaScript inline, grafici SVG disegnati dallo script), nessuna build richiesta.
+- `assets/` — icone di CivilBox e feagent.
 
 ## Sorgente
 
