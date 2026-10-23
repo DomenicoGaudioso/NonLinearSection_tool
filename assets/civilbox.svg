@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="civilBox">
+  <!-- Scatola aperta: alette, fianchi e fondo. Il bordo superiore e'
+       interrotto al centro per lasciar passare la freccia. -->
+  <g stroke="#1f2d3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 12.5 L2.3 9" />
+    <path d="M26 12.5 L29.7 9" />
+    <path d="M6 12.5 V24.8 a2.2 2.2 0 0 0 2.2 2.2 h15.6 a2.2 2.2 0 0 0 2.2 -2.2 V12.5" />
+    <path d="M6 12.5 H12.3" />
+    <path d="M19.7 12.5 H26" />
+  </g>
+  <!-- Lo strumento che esce dalla scatola. -->
+  <g stroke="#2f8f9d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 22 V6" />
+    <path d="M11.5 10.5 L16 6 L20.5 10.5" />
+  </g>
+</svg>
